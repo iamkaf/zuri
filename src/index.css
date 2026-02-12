@@ -1,23 +1,35 @@
-/* Zuri UI — tray-window friendly, themeable */
+/* Zuri UI — compact, platform-aware themes (Apple/Windows) + expressive Open themes */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 :root {
   --bg: #0e0f12;
-  --panel: rgba(255, 255, 255, 0.06);
-  --panel2: rgba(255, 255, 255, 0.09);
   --text: rgba(255, 255, 255, 0.92);
   --muted: rgba(255, 255, 255, 0.62);
   --border: rgba(255, 255, 255, 0.14);
+
+  --panel: rgba(255, 255, 255, 0.07);
+  --panel2: rgba(255, 255, 255, 0.10);
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+
   --accent: #7c5cff;
   --accent2: #2de2e6;
   --danger: #ff4d6d;
+
   --radius: 14px;
   --radius2: 10px;
 
-  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica,
     Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
   --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     'Liberation Mono', 'Courier New', monospace;
+
+  --tap: 34px;
+  --pad: 12px;
 }
 
 html,
@@ -33,10 +45,13 @@ body {
   overflow: hidden;
 }
 
-/* --- Themes --- */
+/* ---------- Themes ---------- */
 
+/* OPEN (creative) */
 [data-theme='open-dark'] {
   --bg: #0e0f12;
+  --panel: rgba(255, 255, 255, 0.07);
+  --panel2: rgba(255, 255, 255, 0.10);
   --accent: #7c5cff;
   --accent2: #2de2e6;
 }
@@ -49,11 +64,13 @@ body {
   --muted: rgba(0, 0, 0, 0.55);
   --border: rgba(0, 0, 0, 0.12);
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.12);
-  --accent: #4c6fff;
+  --accent: #3a5bff;
   --accent2: #00b3ff;
 }
 
+/* WINDOWS (Segoe, sharper corners, acrylic-ish surfaces) */
 [data-theme='windows-dark'] {
+  --font: ui-sans-serif, 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
   --bg: #0b0b0c;
   --panel: rgba(255, 255, 255, 0.06);
   --panel2: rgba(255, 255, 255, 0.09);
@@ -64,23 +81,27 @@ body {
 }
 
 [data-theme='windows-light'] {
+  --font: ui-sans-serif, 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
   --bg: #f3f3f3;
-  --panel: rgba(0, 0, 0, 0.05);
-  --panel2: rgba(0, 0, 0, 0.08);
+  --panel: rgba(255, 255, 255, 0.72);
+  --panel2: rgba(255, 255, 255, 0.86);
   --text: rgba(0, 0, 0, 0.88);
   --muted: rgba(0, 0, 0, 0.55);
   --border: rgba(0, 0, 0, 0.14);
-  --shadow: 0 18px 60px rgba(0, 0, 0, 0.16);
+  --shadow: 0 16px 50px rgba(0, 0, 0, 0.18);
   --accent: #0067c0;
   --accent2: #00a2ff;
   --radius: 10px;
   --radius2: 8px;
 }
 
+/* APPLE (SF, softer radius, subtle vibrancy) */
 [data-theme='apple-dark'] {
+  --font: ui-sans-serif, system-ui, -apple-system, '.SFNSDisplay', 'SF Pro Display',
+    'SF Pro Text', sans-serif;
   --bg: #0b0c0f;
-  --panel: rgba(255, 255, 255, 0.06);
-  --panel2: rgba(255, 255, 255, 0.09);
+  --panel: rgba(255, 255, 255, 0.08);
+  --panel2: rgba(255, 255, 255, 0.11);
   --accent: #0a84ff;
   --accent2: #64d2ff;
   --radius: 16px;
@@ -88,20 +109,22 @@ body {
 }
 
 [data-theme='apple-light'] {
-  --bg: #f8f8fa;
-  --panel: rgba(0, 0, 0, 0.04);
-  --panel2: rgba(0, 0, 0, 0.065);
+  --font: ui-sans-serif, system-ui, -apple-system, '.SFNSDisplay', 'SF Pro Display',
+    'SF Pro Text', sans-serif;
+  --bg: #f7f7f9;
+  --panel: rgba(255, 255, 255, 0.72);
+  --panel2: rgba(255, 255, 255, 0.86);
   --text: rgba(0, 0, 0, 0.88);
   --muted: rgba(0, 0, 0, 0.55);
   --border: rgba(0, 0, 0, 0.12);
-  --shadow: 0 18px 60px rgba(0, 0, 0, 0.12);
+  --shadow: 0 18px 60px rgba(0, 0, 0, 0.14);
   --accent: #0a84ff;
   --accent2: #34c759;
   --radius: 16px;
   --radius2: 12px;
 }
 
-/* --- App layout --- */
+/* ---------- App layout ---------- */
 
 #app {
   height: 100%;
@@ -114,12 +137,26 @@ body {
 }
 
 .top {
-  padding: 12px 12px 10px;
+  padding: var(--pad);
   border-bottom: 1px solid var(--border);
   background:
-    radial-gradient(1200px 300px at 10% 0%, color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 55%),
-    radial-gradient(900px 260px at 95% 0%, color-mix(in srgb, var(--accent2) 14%, transparent) 0%, transparent 52%),
+    radial-gradient(1200px 260px at 14% 0%, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 55%),
+    radial-gradient(900px 240px at 96% 0%, color-mix(in srgb, var(--accent2) 12%, transparent) 0%, transparent 55%),
     var(--bg);
+}
+
+/* Apple: toned-down header like a stock toolbar */
+[data-theme^='apple-'] .top {
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  -webkit-backdrop-filter: saturate(160%) blur(16px);
+  backdrop-filter: saturate(160%) blur(16px);
+}
+
+/* Windows: acrylic-esque */
+[data-theme^='windows-'] .top {
+  background: color-mix(in srgb, var(--panel2) 86%, var(--bg));
+  -webkit-backdrop-filter: saturate(140%) blur(12px);
+  backdrop-filter: saturate(140%) blur(12px);
 }
 
 .brand {
@@ -127,6 +164,7 @@ body {
   gap: 10px;
   align-items: center;
   margin-bottom: 10px;
+  min-width: 0;
 }
 
 .glyph {
@@ -135,7 +173,17 @@ body {
   border-radius: 10px;
   background:
     linear-gradient(145deg, color-mix(in srgb, var(--accent) 85%, #000 0%), color-mix(in srgb, var(--accent2) 65%, #000 0%));
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
+}
+
+/* Apple: icon feels like an SF Symbol tile */
+[data-theme^='apple-'] .glyph {
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.brandText {
+  min-width: 0;
 }
 
 .brandText .name {
@@ -143,14 +191,19 @@ body {
   letter-spacing: 0.2px;
 }
 
+[data-theme^='apple-'] .brandText .name {
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
 .brandText .meta {
-  margin-top: 2px;
+  margin-top: 3px;
   font-size: 11px;
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 280px;
+  max-width: 320px;
 }
 
 .nav {
@@ -158,11 +211,13 @@ body {
   gap: 8px;
 }
 
+/* Default: pill switcher */
 .navBtn {
+  height: var(--tap);
   border: 1px solid var(--border);
   background: var(--panel);
   color: var(--text);
-  padding: 7px 10px;
+  padding: 0 12px;
   border-radius: 999px;
   font-weight: 650;
   font-size: 12px;
@@ -170,89 +225,56 @@ body {
 }
 
 .navBtn.isActive {
-  background: color-mix(in srgb, var(--accent) 22%, var(--panel));
+  background: color-mix(in srgb, var(--accent) 18%, var(--panel2));
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
 }
 
+/* Apple: segmented control */
+[data-theme^='apple-'] .nav {
+  background: color-mix(in srgb, var(--panel2) 65%, transparent);
+  border: 1px solid var(--border);
+  padding: 3px;
+  border-radius: 10px;
+}
+
+[data-theme^='apple-'] .navBtn {
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  height: 28px;
+  padding: 0 12px;
+  font-weight: 600;
+}
+
+[data-theme^='apple-'] .navBtn.isActive {
+  background: color-mix(in srgb, var(--panel2) 86%, var(--bg));
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+}
+
+/* Windows: square-ish buttons */
+[data-theme^='windows-'] .navBtn {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
 .main {
-  padding: 12px;
+  padding: var(--pad);
   overflow: hidden;
 }
 
-/* --- Tasks page --- */
+/* ---------- Common controls ---------- */
 
-.tabsRow {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.tabs {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-
-.tab {
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text);
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.tab.isActive {
-  background: color-mix(in srgb, var(--accent2) 18%, var(--panel2));
-  border-color: color-mix(in srgb, var(--accent2) 45%, var(--border));
-}
-
-.toolbar {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.seg {
-  display: inline-flex;
-  gap: 6px;
-}
-
-.segBtn {
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--muted);
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.segBtn.isActive {
-  color: var(--text);
-  background: color-mix(in srgb, var(--accent) 18%, var(--panel2));
-}
-
-.add {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-}
-
-.input {
+.input,
+select.input {
   width: 100%;
-  box-sizing: border-box;
-  padding: 9px 10px;
+  height: var(--tap);
+  padding: 0 10px;
   border-radius: var(--radius2);
   border: 1px solid var(--border);
   background: var(--panel);
   color: var(--text);
   outline: none;
+  min-width: 0;
 }
 
 .input:focus {
@@ -260,22 +282,28 @@ body {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
-.input.time {
-  width: 120px;
+button {
+  font: inherit;
 }
 
 .cta {
-  padding: 9px 12px;
+  height: var(--tap);
+  padding: 0 12px;
   border-radius: var(--radius2);
   border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
-  background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 70%, var(--panel2)), color-mix(in srgb, var(--accent2) 38%, var(--panel2)));
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--accent) 70%, var(--panel2)),
+    color-mix(in srgb, var(--accent2) 38%, var(--panel2))
+  );
   color: var(--text);
   font-weight: 750;
   cursor: pointer;
 }
 
 .small {
-  padding: 7px 10px;
+  height: 30px;
+  padding: 0 10px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--panel);
@@ -285,8 +313,13 @@ body {
   cursor: pointer;
 }
 
+[data-theme^='windows-'] .small {
+  border-radius: 8px;
+}
+
 .ghost {
-  padding: 6px 10px;
+  height: 28px;
+  padding: 0 10px;
   border-radius: 999px;
   border: 1px solid transparent;
   background: transparent;
@@ -302,6 +335,80 @@ body {
   color: var(--text);
 }
 
+/* ---------- Tasks page ---------- */
+
+.tabsRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  min-width: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  min-width: 0;
+}
+
+.tab {
+  height: 28px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+[data-theme^='windows-'] .tab {
+  border-radius: 8px;
+}
+
+.tab.isActive {
+  background: color-mix(in srgb, var(--accent2) 16%, var(--panel2));
+  border-color: color-mix(in srgb, var(--accent2) 42%, var(--border));
+}
+
+.toolbar {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.seg {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.segBtn {
+  height: 28px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.segBtn.isActive {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 14%, var(--panel2));
+}
+
+.add {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  min-width: 0;
+}
+
 .list {
   overflow: auto;
   max-height: calc(520px - 230px);
@@ -310,15 +417,23 @@ body {
 
 .task {
   display: grid;
-  grid-template-columns: 28px 1fr auto;
+  grid-template-columns: 26px 1fr auto;
   gap: 10px;
   align-items: center;
   padding: 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--panel2) 80%, transparent), var(--panel));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--panel2) 84%, transparent),
+    var(--panel)
+  );
   margin-bottom: 8px;
+  min-width: 0;
+}
+
+[data-theme^='windows-'] .task {
+  border-radius: 12px;
 }
 
 .task.isDone {
@@ -326,9 +441,9 @@ body {
 }
 
 .check {
-  width: 24px;
-  height: 24px;
-  border-radius: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
   border: 1px solid var(--border);
   background: var(--panel);
   color: var(--text);
@@ -340,13 +455,20 @@ body {
 
 .task.isDone .check {
   border-color: color-mix(in srgb, var(--accent2) 60%, var(--border));
-  background: color-mix(in srgb, var(--accent2) 22%, var(--panel));
+  background: color-mix(in srgb, var(--accent2) 18%, var(--panel));
+}
+
+.tMain {
+  min-width: 0;
 }
 
 .tTitle {
   font-weight: 750;
   font-size: 13px;
   line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .task.isDone .tTitle {
@@ -364,7 +486,6 @@ body {
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   padding: 3px 7px;
   border-radius: 999px;
   border: 1px solid var(--border);
@@ -380,8 +501,8 @@ body {
 
 .pri-P0 {
   color: #fff;
-  background: color-mix(in srgb, var(--danger) 35%, var(--panel));
-  border-color: color-mix(in srgb, var(--danger) 55%, var(--border));
+  background: color-mix(in srgb, var(--danger) 32%, var(--panel));
+  border-color: color-mix(in srgb, var(--danger) 52%, var(--border));
 }
 
 .due {
@@ -409,6 +530,7 @@ body {
   padding: 16px;
   background: var(--panel);
   box-shadow: var(--shadow);
+  max-width: 340px;
 }
 
 .emptyCard h2 {
@@ -423,12 +545,13 @@ body {
   line-height: 1.35;
 }
 
-/* --- Settings page --- */
+/* ---------- Settings page (no horizontal scroll) ---------- */
 
 .settings {
   display: grid;
   gap: 10px;
   overflow: auto;
+  overflow-x: hidden;
   max-height: calc(520px - 106px);
   padding-right: 2px;
 }
@@ -438,6 +561,7 @@ body {
   background: var(--panel);
   border-radius: var(--radius);
   padding: 12px;
+  min-width: 0;
 }
 
 .card h2 {
@@ -451,19 +575,25 @@ body {
   gap: 10px;
   align-items: start;
   margin-top: 8px;
+  min-width: 0;
 }
 
 .label {
   font-size: 12px;
   color: var(--muted);
-  padding-top: 8px;
+  padding-top: 7px;
 }
 
 .value {
   display: flex;
   gap: 8px;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.value > * {
+  min-width: 0;
 }
 
 .path {
@@ -474,6 +604,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
 }
 
 .toggle {
@@ -499,7 +630,7 @@ body {
   font-family: var(--mono);
 }
 
-/* --- Modal sheet --- */
+/* ---------- Modal sheet ---------- */
 
 .modal[aria-hidden='true'] {
   display: none;
@@ -523,9 +654,15 @@ body {
   bottom: 12px;
   border-radius: calc(var(--radius) + 2px);
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 70%, #000);
+  background: color-mix(in srgb, var(--bg) 72%, #000);
   box-shadow: var(--shadow);
   overflow: hidden;
+}
+
+[data-theme^='apple-'] .sheet {
+  background: color-mix(in srgb, var(--panel2) 62%, var(--bg));
+  -webkit-backdrop-filter: saturate(160%) blur(18px);
+  backdrop-filter: saturate(160%) blur(18px);
 }
 
 .sheetHead {
