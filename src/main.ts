@@ -65,25 +65,53 @@ const createWindow = () => {
 };
 
 const positionWindow = () => {
-  if (!tray || !window) return;
+  if (!window) return;
 
-  const trayBounds = tray.getBounds();
   const windowBounds = window.getBounds();
+  const cursor = screen.getCursorScreenPoint();
 
-  // Center horizontally under/above the tray icon
-  const x = Math.round(trayBounds.x + trayBounds.width / 2 - windowBounds.width / 2);
+  // Tray bounds can be bogus on Linux (0,0,0,0). Fallback to cursor anchoring.
+  const trayBounds = tray?.getBounds();
+  const trayBoundsValid =
+    trayBounds &&
+    Number.isFinite(trayBounds.width) &&
+    Number.isFinite(trayBounds.height) &&
+    trayBounds.width > 0 &&
+    trayBounds.height > 0;
 
-  // On macOS the tray is at the top; on Windows/Linux it's usually at the bottom.
-  const y = process.platform === 'darwin'
-    ? Math.round(trayBounds.y + trayBounds.height + 4)
-    : Math.round(trayBounds.y - windowBounds.height - 4);
+  const anchorPoint = trayBoundsValid && trayBounds
+    ? { x: trayBounds.x, y: trayBounds.y }
+    : cursor;
 
-  // Keep it on-screen
-  const display = screen.getDisplayNearestPoint({ x: trayBounds.x, y: trayBounds.y });
+  const display = screen.getDisplayNearestPoint(anchorPoint);
   const workArea = display.workArea;
 
-  const clampedX = Math.min(Math.max(x, workArea.x), workArea.x + workArea.width - windowBounds.width);
-  const clampedY = Math.min(Math.max(y, workArea.y), workArea.y + workArea.height - windowBounds.height);
+  let x: number;
+  let y: number;
+
+  if (trayBoundsValid && trayBounds) {
+    // Center horizontally under/above the tray icon
+    x = Math.round(trayBounds.x + trayBounds.width / 2 - windowBounds.width / 2);
+
+    // On macOS the tray is at the top; on Windows/Linux it's usually at the bottom.
+    y =
+      process.platform === 'darwin'
+        ? Math.round(trayBounds.y + trayBounds.height + 4)
+        : Math.round(trayBounds.y - windowBounds.height - 4);
+  } else {
+    // Cursor-anchored placement: pop "near the click" and keep inside work area.
+    x = Math.round(cursor.x - windowBounds.width + 14);
+    y = Math.round(cursor.y - windowBounds.height - 14);
+  }
+
+  const clampedX = Math.min(
+    Math.max(x, workArea.x),
+    workArea.x + workArea.width - windowBounds.width,
+  );
+  const clampedY = Math.min(
+    Math.max(y, workArea.y),
+    workArea.y + workArea.height - windowBounds.height,
+  );
 
   window.setPosition(clampedX, clampedY, false);
 };
