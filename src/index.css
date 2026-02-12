@@ -285,6 +285,12 @@ select.input {
   min-width: 0;
 }
 
+/* Fix native dropdown contrast on some Linux themes where the menu is white */
+select.input option {
+  background: #fff;
+  color: #111;
+}
+
 .input:focus {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
