@@ -157,7 +157,13 @@ const toggleWindow = () => {
     return;
   }
 
-  // debug logs removed
+  console.log('[zuri] tray bounds', tray?.getBounds());
+  console.log('[zuri] window bounds', window.getBounds());
+  console.log('[zuri] cursor', screen.getCursorScreenPoint());
+  console.log('[zuri] anchors', {
+    lastTrayClickPoint,
+    fixedAnchorPoint,
+  });
 
   positionWindow();
   window.show();
@@ -210,7 +216,13 @@ const createTray = () => {
 
     const pos = fromPosition ?? fromEvent ?? fromBounds ?? fromCursor;
 
-    // (debug logging removed)
+    console.log('[zuri] tray click pick', {
+      fromPosition,
+      fromEvent,
+      fromBounds,
+      fromCursor,
+      chosen: pos,
+    });
 
     // Some environments may report (0,0). Treat as bogus.
     if (pos.x === 0 && pos.y === 0) {
