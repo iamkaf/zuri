@@ -95,8 +95,8 @@ const positionWindow = () => {
 
   const [w, h] = window.getSize();
 
-  // Prefer (1) tray click point captured in handler (2) fixed anchor (3) cursor
-  const raw = lastTrayClickPoint ?? fixedAnchorPoint ?? screen.getCursorScreenPoint();
+  // Prefer fixed anchor (first known good) for stability on Linux; then fallback.
+  const raw = fixedAnchorPoint ?? lastTrayClickPoint ?? screen.getCursorScreenPoint();
 
   // Some Linux environments can occasionally report (0,0). If we have a fixed anchor,
   // ignore the bogus value. Otherwise: do not reposition (avoids the dreaded top-left jump).
@@ -241,16 +241,18 @@ const createTray = () => {
     // Some environments may report (0,0). Treat as bogus.
     if (pos.x === 0 && pos.y === 0) {
       lastTrayClickPoint = null;
-    } else {
-      lastTrayClickPoint = pos;
-      lastGoodAnchorPoint = pos;
+      return toggleWindow();
+    }
 
-      // First known good tray click point becomes the fixed anchor for the session,
-      // and we persist it for future runs.
-      if (!fixedAnchorPoint) {
-        fixedAnchorPoint = pos;
-        void patchSettings({ trayAnchor: pos });
-      }
+    // Always keep lastTrayClickPoint for logs/telemetry.
+    lastTrayClickPoint = pos;
+    lastGoodAnchorPoint = pos;
+
+    // First known good tray click point becomes the fixed anchor for the session,
+    // and we persist it for future runs.
+    if (!fixedAnchorPoint) {
+      fixedAnchorPoint = pos;
+      void patchSettings({ trayAnchor: pos });
     }
 
     toggleWindow();
