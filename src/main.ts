@@ -26,6 +26,8 @@ let stopWatching: null | (() => void) = null;
 let lastTrayClickPoint: { x: number; y: number } | null = null;
 // Best-effort anchor tracking for debugging/future heuristics
 let lastGoodAnchorPoint: { x: number; y: number } | null = null;
+// Fixed tray anchor: once we find a good click location, keep using it (Linux stability)
+let fixedAnchorPoint: { x: number; y: number } | null = null;
 
 const getAssetPath = (...paths: string[]) => {
   // In dev, this file is built to .vite/build/main.js, so ../../ points at the project root.
@@ -38,6 +40,7 @@ const getAssetPath = (...paths: string[]) => {
 const createWindow = async () => {
   const settings = await loadSettings();
   const saved = settings.windowBounds;
+  fixedAnchorPoint = settings.trayAnchor ?? null;
 
   window = new BrowserWindow({
     width: saved?.width ?? 380,
@@ -92,14 +95,14 @@ const positionWindow = () => {
 
   const [w, h] = window.getSize();
 
-  // Prefer click anchor, then cursor.
-  const raw = lastTrayClickPoint ?? screen.getCursorScreenPoint();
+  // Prefer (1) tray click point captured in handler (2) fixed anchor (3) cursor
+  const raw = lastTrayClickPoint ?? fixedAnchorPoint ?? screen.getCursorScreenPoint();
 
-  // Some Linux environments (or Electron versions / Wayland) can occasionally report (0,0).
-  // In that case: DO NOT reposition (avoids the dreaded top-left jump). We'll just show the
-  // window at its last saved position.
+  // Some Linux environments can occasionally report (0,0). If we have a fixed anchor,
+  // ignore the bogus value. Otherwise: do not reposition (avoids the dreaded top-left jump).
   const anchorLooksBogus = raw.x === 0 && raw.y === 0;
   if (anchorLooksBogus) {
+    if (fixedAnchorPoint) return;
     console.warn('[zuri] anchor point bogus; skipping reposition');
     return;
   }
@@ -154,9 +157,7 @@ const toggleWindow = () => {
     return;
   }
 
-  console.log('[zuri] tray bounds', tray?.getBounds());
-  console.log('[zuri] window bounds', window.getBounds());
-  console.log('[zuri] cursor', lastTrayClickPoint ?? screen.getCursorScreenPoint());
+  // debug logs removed
 
   positionWindow();
   window.show();
@@ -209,13 +210,7 @@ const createTray = () => {
 
     const pos = fromPosition ?? fromEvent ?? fromBounds ?? fromCursor;
 
-    console.log('[zuri] tray click pick', {
-      fromPosition,
-      fromEvent,
-      fromBounds,
-      fromCursor,
-      chosen: pos,
-    });
+    // (debug logging removed)
 
     // Some environments may report (0,0). Treat as bogus.
     if (pos.x === 0 && pos.y === 0) {
@@ -223,6 +218,13 @@ const createTray = () => {
     } else {
       lastTrayClickPoint = pos;
       lastGoodAnchorPoint = pos;
+
+      // First known good tray click point becomes the fixed anchor for the session,
+      // and we persist it for future runs.
+      if (!fixedAnchorPoint) {
+        fixedAnchorPoint = pos;
+        void patchSettings({ trayAnchor: pos });
+      }
     }
 
     toggleWindow();

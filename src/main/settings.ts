@@ -20,6 +20,7 @@ export type ZuriSettings = {
   theme: ThemeId;
   notificationTime: string; // HH:MM
   windowBounds?: { x: number; y: number; width: number; height: number };
+  trayAnchor?: { x: number; y: number };
 };
 
 const SETTINGS_DIR = () => path.join(app.getPath('home'), '.zuri');
