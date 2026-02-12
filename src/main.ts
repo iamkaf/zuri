@@ -173,15 +173,51 @@ const createTray = () => {
   Menu.setApplicationMenu(null);
   tray.setToolTip('Zuri');
 
-  tray.on('click', (_event, _bounds, position) => {
-    // `tray.getBounds()` is unreliable on some Linux desktops.
-    // Prefer the click `position`, otherwise sample cursor immediately in the click handler.
-    const pos =
+  tray.on('click', (event, bounds, position) => {
+    // Linux tray geometry is unreliable. Try (in order):
+    // 1) click `position` (when provided)
+    // 2) event coordinates (varies by platform)
+    // 3) bounds center (if valid)
+    // 4) cursor position
+
+    const fromPosition =
       position && typeof position.x === 'number' && typeof position.y === 'number'
         ? { x: position.x, y: position.y }
-        : screen.getCursorScreenPoint();
+        : null;
 
-    // Some environments (Wayland setups / odd shells) may report (0,0). Treat as bogus.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const anyEvent = event as any;
+    const fromEvent =
+      anyEvent && typeof anyEvent.x === 'number' && typeof anyEvent.y === 'number'
+        ? { x: anyEvent.x, y: anyEvent.y }
+        : anyEvent && typeof anyEvent.screenX === 'number' && typeof anyEvent.screenY === 'number'
+          ? { x: anyEvent.screenX, y: anyEvent.screenY }
+          : null;
+
+    const boundsValid =
+      bounds &&
+      Number.isFinite(bounds.width) &&
+      Number.isFinite(bounds.height) &&
+      bounds.width > 0 &&
+      bounds.height > 0;
+
+    const fromBounds = boundsValid
+      ? { x: Math.round(bounds.x + bounds.width / 2), y: Math.round(bounds.y + bounds.height / 2) }
+      : null;
+
+    const fromCursor = screen.getCursorScreenPoint();
+
+    const pos = fromPosition ?? fromEvent ?? fromBounds ?? fromCursor;
+
+    console.log('[zuri] tray click pick', {
+      fromPosition,
+      fromEvent,
+      fromBounds,
+      fromCursor,
+      chosen: pos,
+    });
+
+    // Some environments may report (0,0). Treat as bogus.
     if (pos.x === 0 && pos.y === 0) {
       lastTrayClickPoint = null;
     } else {
