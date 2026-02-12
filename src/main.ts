@@ -96,6 +96,10 @@ const toggleWindow = () => {
     return;
   }
 
+  console.log('[zuri] tray bounds', tray?.getBounds());
+  console.log('[zuri] window bounds', window.getBounds());
+  console.log('[zuri] cursor', screen.getCursorScreenPoint());
+
   positionWindow();
   window.show();
   window.focus();
