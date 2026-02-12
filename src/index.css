@@ -68,60 +68,68 @@ body {
   --accent2: #00b3ff;
 }
 
-/* WINDOWS (Segoe, sharper corners, acrylic-ish surfaces) */
+/* WINDOWS (Segoe UI Variable, Win11 radii, Mica-ish surfaces) */
 [data-theme='windows-dark'] {
   --font: ui-sans-serif, 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
-  --bg: #0b0b0c;
-  --panel: rgba(255, 255, 255, 0.06);
-  --panel2: rgba(255, 255, 255, 0.09);
-  --accent: #3a96ff;
-  --accent2: #60cdff;
-  --radius: 10px;
-  --radius2: 8px;
+  --bg: #202020;
+  --panel: rgba(255, 255, 255, 0.07);
+  --panel2: rgba(255, 255, 255, 0.10);
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.66);
+  --border: rgba(255, 255, 255, 0.14);
+  --shadow: 0 18px 55px rgba(0, 0, 0, 0.45);
+  --accent: #0078d4; /* Win11 system accent-ish */
+  --accent2: #40c4ff;
+  --radius: 12px;
+  --radius2: 9px;
 }
 
 [data-theme='windows-light'] {
   --font: ui-sans-serif, 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
-  --bg: #f3f3f3;
-  --panel: rgba(255, 255, 255, 0.72);
-  --panel2: rgba(255, 255, 255, 0.86);
+  --bg: #f5f5f5;
+  --panel: rgba(255, 255, 255, 0.78);
+  --panel2: rgba(255, 255, 255, 0.92);
   --text: rgba(0, 0, 0, 0.88);
-  --muted: rgba(0, 0, 0, 0.55);
-  --border: rgba(0, 0, 0, 0.14);
-  --shadow: 0 16px 50px rgba(0, 0, 0, 0.18);
+  --muted: rgba(0, 0, 0, 0.60);
+  --border: rgba(0, 0, 0, 0.12);
+  --shadow: 0 18px 55px rgba(0, 0, 0, 0.16);
   --accent: #0067c0;
   --accent2: #00a2ff;
-  --radius: 10px;
-  --radius2: 8px;
+  --radius: 12px;
+  --radius2: 9px;
 }
 
-/* APPLE (SF, softer radius, subtle vibrancy) */
+/* APPLE (SF, stock macOS palette + materials) */
 [data-theme='apple-dark'] {
   --font: ui-sans-serif, system-ui, -apple-system, '.SFNSDisplay', 'SF Pro Display',
     'SF Pro Text', sans-serif;
-  --bg: #0b0c0f;
-  --panel: rgba(255, 255, 255, 0.08);
-  --panel2: rgba(255, 255, 255, 0.11);
-  --accent: #0a84ff;
+  --bg: #1c1c1e; /* systemBackground */
+  --panel: rgba(255, 255, 255, 0.08); /* secondarySystemFill-ish */
+  --panel2: rgba(255, 255, 255, 0.12);
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(235, 235, 245, 0.60);
+  --border: rgba(235, 235, 245, 0.16);
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  --accent: #0a84ff; /* systemBlue */
   --accent2: #64d2ff;
-  --radius: 16px;
-  --radius2: 12px;
+  --radius: 14px;
+  --radius2: 10px;
 }
 
 [data-theme='apple-light'] {
   --font: ui-sans-serif, system-ui, -apple-system, '.SFNSDisplay', 'SF Pro Display',
     'SF Pro Text', sans-serif;
-  --bg: #f7f7f9;
-  --panel: rgba(255, 255, 255, 0.72);
-  --panel2: rgba(255, 255, 255, 0.86);
+  --bg: #f2f2f7; /* systemGroupedBackground */
+  --panel: rgba(255, 255, 255, 0.78);
+  --panel2: rgba(255, 255, 255, 0.92);
   --text: rgba(0, 0, 0, 0.88);
-  --muted: rgba(0, 0, 0, 0.55);
-  --border: rgba(0, 0, 0, 0.12);
-  --shadow: 0 18px 60px rgba(0, 0, 0, 0.14);
-  --accent: #0a84ff;
-  --accent2: #34c759;
-  --radius: 16px;
-  --radius2: 12px;
+  --muted: rgba(60, 60, 67, 0.60);
+  --border: rgba(60, 60, 67, 0.18);
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.12);
+  --accent: #0a84ff; /* systemBlue */
+  --accent2: #34c759; /* systemGreen */
+  --radius: 14px;
+  --radius2: 10px;
 }
 
 /* ---------- App layout ---------- */
@@ -145,18 +153,18 @@ body {
     var(--bg);
 }
 
-/* Apple: toned-down header like a stock toolbar */
+/* Apple: stock-ish toolbar (subtle, not neon) */
 [data-theme^='apple-'] .top {
-  background: color-mix(in srgb, var(--bg) 92%, transparent);
-  -webkit-backdrop-filter: saturate(160%) blur(16px);
-  backdrop-filter: saturate(160%) blur(16px);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  backdrop-filter: saturate(180%) blur(18px);
 }
 
-/* Windows: acrylic-esque */
+/* Windows: mica-ish header */
 [data-theme^='windows-'] .top {
-  background: color-mix(in srgb, var(--panel2) 86%, var(--bg));
-  -webkit-backdrop-filter: saturate(140%) blur(12px);
-  backdrop-filter: saturate(140%) blur(12px);
+  background: color-mix(in srgb, var(--panel2) 70%, var(--bg));
+  -webkit-backdrop-filter: saturate(150%) blur(14px);
+  backdrop-filter: saturate(150%) blur(14px);
 }
 
 .brand {
@@ -299,6 +307,19 @@ button {
   color: var(--text);
   font-weight: 750;
   cursor: pointer;
+}
+
+/* Platform overrides: keep primaries stock */
+[data-theme^='apple-'] .cta {
+  background: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 75%, var(--border));
+  color: #fff;
+}
+
+[data-theme^='windows-'] .cta {
+  background: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 80%, var(--border));
+  color: #fff;
 }
 
 .small {
@@ -611,6 +632,7 @@ button {
   display: flex;
   gap: 10px;
   align-items: center;
+  justify-content: space-between;
   margin: 8px 0;
   font-size: 12px;
   color: var(--text);
@@ -618,6 +640,47 @@ button {
 
 .toggle input {
   accent-color: var(--accent);
+}
+
+/* Apple/Windows: render checkboxes as switches */
+[data-theme^='apple-'] .toggle input,
+[data-theme^='windows-'] .toggle input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel2) 75%, var(--bg));
+  position: relative;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+[data-theme^='apple-'] .toggle input::after,
+[data-theme^='windows-'] .toggle input::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+  transition: left 120ms ease, background 120ms ease;
+}
+
+[data-theme^='apple-'] .toggle input:checked,
+[data-theme^='windows-'] .toggle input:checked {
+  background: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--border));
+}
+
+[data-theme^='apple-'] .toggle input:checked::after,
+[data-theme^='windows-'] .toggle input:checked::after {
+  left: 19px;
 }
 
 .foot {
