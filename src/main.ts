@@ -24,6 +24,7 @@ let tray: Tray | null = null;
 let window: BrowserWindow | null = null;
 let stopWatching: null | (() => void) = null;
 let lastTrayClickPoint: { x: number; y: number } | null = null;
+// Best-effort anchor tracking for debugging/future heuristics
 let lastGoodAnchorPoint: { x: number; y: number } | null = null;
 
 const getAssetPath = (...paths: string[]) => {
@@ -34,10 +35,15 @@ const getAssetPath = (...paths: string[]) => {
     : path.join(__dirname, '../../', ...paths);
 };
 
-const createWindow = () => {
+const createWindow = async () => {
+  const settings = await loadSettings();
+  const saved = settings.windowBounds;
+
   window = new BrowserWindow({
-    width: 380,
-    height: 520,
+    width: saved?.width ?? 380,
+    height: saved?.height ?? 520,
+    x: saved?.x,
+    y: saved?.y,
     show: false,
     resizable: false,
     minimizable: false,
@@ -60,6 +66,21 @@ const createWindow = () => {
     );
   }
 
+  // Persist last window position/size (best-effort)
+  let saveTimer: NodeJS.Timeout | null = null;
+  const scheduleSaveBounds = () => {
+    if (!window) return;
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      if (!window) return;
+      const b = window.getBounds();
+      void patchSettings({ windowBounds: b });
+    }, 250);
+  };
+
+  window.on('move', scheduleSaveBounds);
+  window.on('resize', scheduleSaveBounds);
+
   // Auto-hide when it loses focus (common tray-app behavior)
   window.on('blur', () => {
     if (window && window.isVisible()) window.hide();
@@ -71,16 +92,22 @@ const positionWindow = () => {
 
   const [w, h] = window.getSize();
 
-  const rawCursor = lastTrayClickPoint ?? screen.getCursorScreenPoint();
-  const cursorLooksBogus = rawCursor.x === 0 && rawCursor.y === 0;
-  const cursor = !cursorLooksBogus
-    ? rawCursor
-    : lastGoodAnchorPoint ?? (() => {
-        const wa = screen.getPrimaryDisplay().workArea;
-        return { x: Math.round(wa.x + wa.width / 2), y: Math.round(wa.y + wa.height / 2) };
-      })();
+  // Prefer click anchor, then cursor.
+  const raw = lastTrayClickPoint ?? screen.getCursorScreenPoint();
 
-  // Tray bounds can be bogus on Linux (0,0,0,0). Fallback to cursor anchoring.
+  // Some Linux environments (or Electron versions / Wayland) can occasionally report (0,0).
+  // In that case: DO NOT reposition (avoids the dreaded top-left jump). We'll just show the
+  // window at its last saved position.
+  const anchorLooksBogus = raw.x === 0 && raw.y === 0;
+  if (anchorLooksBogus) {
+    console.warn('[zuri] anchor point bogus; skipping reposition');
+    return;
+  }
+
+  lastGoodAnchorPoint = raw;
+  void lastGoodAnchorPoint;
+
+  // Tray bounds can be bogus on Linux (0,0,0,0). Use tray when valid, otherwise use anchor.
   const trayBounds = tray?.getBounds();
   const trayBoundsValid =
     trayBounds &&
@@ -89,9 +116,7 @@ const positionWindow = () => {
     trayBounds.width > 0 &&
     trayBounds.height > 0;
 
-  const anchorPoint = trayBoundsValid && trayBounds
-    ? { x: trayBounds.x, y: trayBounds.y }
-    : cursor;
+  const anchorPoint = trayBoundsValid && trayBounds ? { x: trayBounds.x, y: trayBounds.y } : raw;
 
   const display = screen.getDisplayNearestPoint(anchorPoint);
   const workArea = display.workArea;
@@ -100,32 +125,23 @@ const positionWindow = () => {
   let y: number;
 
   if (trayBoundsValid && trayBounds) {
-    // Center horizontally under/above the tray icon
     x = Math.round(trayBounds.x + trayBounds.width / 2 - w / 2);
-
-    // On macOS the tray is at the top; on Windows/Linux it's usually at the bottom.
     y =
       process.platform === 'darwin'
         ? Math.round(trayBounds.y + trayBounds.height + 4)
         : Math.round(trayBounds.y - h - 4);
   } else {
-    // Cursor-anchored placement: decide side based on available space.
+    // Edge-aware placement around the click point.
     const margin = 12;
-    const placeLeft = cursor.x > workArea.x + workArea.width / 2;
-    const placeUp = cursor.y > workArea.y + workArea.height / 2;
+    const placeLeft = raw.x > workArea.x + workArea.width / 2;
+    const placeUp = raw.y > workArea.y + workArea.height / 2;
 
-    x = placeLeft ? Math.round(cursor.x - w - margin) : Math.round(cursor.x + margin);
-    y = placeUp ? Math.round(cursor.y - h - margin) : Math.round(cursor.y + margin);
+    x = placeLeft ? Math.round(raw.x - w - margin) : Math.round(raw.x + margin);
+    y = placeUp ? Math.round(raw.y - h - margin) : Math.round(raw.y + margin);
   }
 
-  const clampedX = Math.min(
-    Math.max(x, workArea.x),
-    workArea.x + workArea.width - w,
-  );
-  const clampedY = Math.min(
-    Math.max(y, workArea.y),
-    workArea.y + workArea.height - h,
-  );
+  const clampedX = Math.min(Math.max(x, workArea.x), workArea.x + workArea.width - w);
+  const clampedY = Math.min(Math.max(y, workArea.y), workArea.y + workArea.height - h);
 
   window.setPosition(clampedX, clampedY, false);
 };
@@ -189,7 +205,7 @@ app.on('ready', async () => {
   // On Windows, helps with notifications + taskbar grouping
   app.setAppUserModelId('com.iamkaf.zuri');
 
-  createWindow();
+  await createWindow();
   createTray();
 
   const startWatchingIfNeeded = async () => {
@@ -327,7 +343,7 @@ app.on('window-all-closed', (e) => {
   e.preventDefault();
 });
 
-app.on('activate', () => {
-  if (!window) createWindow();
+app.on('activate', async () => {
+  if (!window) await createWindow();
   toggleWindow();
 });
