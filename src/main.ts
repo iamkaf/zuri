@@ -11,6 +11,9 @@ import {
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { loadSettings, patchSettings } from './main/settings';
+import { ensureFile, readDoc, watchMarkdownFile, writeDoc } from './main/tasks';
+import { rescheduleNotifications } from './main/notify';
+import type { DocModel, Task } from './main/markdown';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -19,6 +22,7 @@ if (started) {
 
 let tray: Tray | null = null;
 let window: BrowserWindow | null = null;
+let stopWatching: null | (() => void) = null;
 
 const getAssetPath = (...paths: string[]) => {
   // In dev, this file is built to .vite/build/main.js, so ../../ points at the project root.
@@ -30,8 +34,8 @@ const getAssetPath = (...paths: string[]) => {
 
 const createWindow = () => {
   window = new BrowserWindow({
-    width: 260,
-    height: 120,
+    width: 380,
+    height: 520,
     show: false,
     resizable: false,
     minimizable: false,
@@ -122,9 +126,46 @@ app.on('ready', async () => {
   // On Windows, helps with notifications + taskbar grouping
   app.setAppUserModelId('com.iamkaf.zuri');
 
+  createWindow();
+  createTray();
+
+  const startWatchingIfNeeded = async () => {
+    if (!window) return;
+    const settings = await loadSettings();
+    if (!settings.markdownPath) return;
+
+    await ensureFile(settings.markdownPath);
+
+    if (stopWatching) stopWatching();
+    const handle = watchMarkdownFile(settings.markdownPath, window);
+    stopWatching = () => handle.close();
+
+    // First schedule
+    const model = await readDoc(settings.markdownPath);
+    rescheduleNotifications({
+      model,
+      enabled: settings.features.notifications,
+      notificationTime: settings.notificationTime,
+    });
+  };
+
   // IPC: settings
   ipcMain.handle('zuri:settings:get', async () => loadSettings());
-  ipcMain.handle('zuri:settings:set', async (_evt, patch) => patchSettings(patch));
+  ipcMain.handle('zuri:settings:set', async (_evt, patch) => {
+    const next = await patchSettings(patch);
+    // restart watcher if markdownPath changed
+    await startWatchingIfNeeded();
+    // reschedule notifications on any settings change
+    if (next.markdownPath) {
+      const model = await readDoc(next.markdownPath);
+      rescheduleNotifications({
+        model,
+        enabled: next.features.notifications,
+        notificationTime: next.notificationTime,
+      });
+    }
+    return next;
+  });
   ipcMain.handle('zuri:settings:pickMarkdown', async () => {
     const result = await dialog.showOpenDialog({
       title: 'Select Markdown file',
@@ -134,11 +175,88 @@ app.on('ready', async () => {
     if (result.canceled || result.filePaths.length === 0) return null;
     const picked = result.filePaths[0];
     await patchSettings({ markdownPath: picked });
+    await startWatchingIfNeeded();
     return picked;
   });
 
-  createWindow();
-  createTray();
+  // IPC: markdown doc ops
+  ipcMain.handle('zuri:doc:get', async (): Promise<DocModel> => {
+    const settings = await loadSettings();
+    if (!settings.markdownPath) return { sections: [] };
+    await ensureFile(settings.markdownPath);
+    return readDoc(settings.markdownPath);
+  });
+
+  const mutate = async (fn: (model: DocModel) => void): Promise<DocModel> => {
+    const settings = await loadSettings();
+    if (!settings.markdownPath) return { sections: [] };
+    await ensureFile(settings.markdownPath);
+    const model = await readDoc(settings.markdownPath);
+    fn(model);
+    await writeDoc(settings.markdownPath, model);
+
+    // notify renderer (our own writes won't always trigger watch reliably)
+    window?.webContents.send('zuri:md:changed');
+
+    rescheduleNotifications({
+      model,
+      enabled: settings.features.notifications,
+      notificationTime: settings.notificationTime,
+    });
+
+    return model;
+  };
+
+  ipcMain.handle('zuri:doc:addSection', async (_evt, name: string) =>
+    mutate((m) => {
+      if (!m.sections.find((s) => s.name === name)) m.sections.push({ name, tasks: [] });
+    }),
+  );
+
+  ipcMain.handle('zuri:doc:addTask', async (_evt, args: { section: string; title: string }) =>
+    mutate((m) => {
+      let sec = m.sections.find((s) => s.name === args.section);
+      if (!sec) {
+        sec = { name: args.section, tasks: [] };
+        m.sections.push(sec);
+      }
+      sec.tasks.push({
+        id: `${sec.name}::${sec.tasks.length}`,
+        done: false,
+        title: args.title,
+        extra: {},
+      });
+    }),
+  );
+
+  ipcMain.handle('zuri:doc:toggleTask', async (_evt, args: { section: string; taskId: string }) =>
+    mutate((m) => {
+      const sec = m.sections.find((s) => s.name === args.section);
+      const task = sec?.tasks.find((t) => t.id === args.taskId);
+      if (task) task.done = !task.done;
+    }),
+  );
+
+  ipcMain.handle(
+    'zuri:doc:updateTask',
+    async (_evt, args: { section: string; taskId: string; patch: Partial<Task> }) =>
+      mutate((m) => {
+        const sec = m.sections.find((s) => s.name === args.section);
+        const task = sec?.tasks.find((t) => t.id === args.taskId);
+        if (!task) return;
+
+        if (typeof args.patch.title === 'string') task.title = args.patch.title;
+        if (typeof args.patch.done === 'boolean') task.done = args.patch.done;
+        if (typeof args.patch.priority === 'string' || args.patch.priority === undefined)
+          task.priority = args.patch.priority as Task['priority'];
+        if (typeof args.patch.effort === 'string' || args.patch.effort === undefined)
+          task.effort = args.patch.effort as Task['effort'];
+        if (typeof args.patch.due === 'string' || args.patch.due === undefined)
+          task.due = args.patch.due;
+      }),
+  );
+
+  await startWatchingIfNeeded();
 });
 
 // Keep the app running even if all windows are closed (tray app)
