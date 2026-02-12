@@ -187,19 +187,26 @@ const createTray = () => {
     // 3) bounds center (if valid)
     // 4) cursor position
 
-    const fromPosition =
+    const fromPositionRaw =
       position && typeof position.x === 'number' && typeof position.y === 'number'
         ? { x: position.x, y: position.y }
         : null;
 
+    const nonZero = (p: { x: number; y: number } | null) =>
+      p && !(p.x === 0 && p.y === 0) ? p : null;
+
+    const fromPosition = nonZero(fromPositionRaw);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const anyEvent = event as any;
-    const fromEvent =
+    const fromEventRaw =
       anyEvent && typeof anyEvent.x === 'number' && typeof anyEvent.y === 'number'
         ? { x: anyEvent.x, y: anyEvent.y }
         : anyEvent && typeof anyEvent.screenX === 'number' && typeof anyEvent.screenY === 'number'
           ? { x: anyEvent.screenX, y: anyEvent.screenY }
           : null;
+
+    const fromEvent = nonZero(fromEventRaw);
 
     const boundsValid =
       bounds &&
@@ -208,18 +215,25 @@ const createTray = () => {
       bounds.width > 0 &&
       bounds.height > 0;
 
-    const fromBounds = boundsValid
+    const fromBoundsRaw = boundsValid
       ? { x: Math.round(bounds.x + bounds.width / 2), y: Math.round(bounds.y + bounds.height / 2) }
       : null;
 
-    const fromCursor = screen.getCursorScreenPoint();
+    const fromBounds = nonZero(fromBoundsRaw);
 
-    const pos = fromPosition ?? fromEvent ?? fromBounds ?? fromCursor;
+    const fromCursorRaw = screen.getCursorScreenPoint();
+    const fromCursor = nonZero(fromCursorRaw);
+
+    const pos = fromPosition ?? fromEvent ?? fromBounds ?? fromCursor ?? { x: 0, y: 0 };
 
     console.log('[zuri] tray click pick', {
+      fromPositionRaw,
       fromPosition,
+      fromEventRaw,
       fromEvent,
+      fromBoundsRaw,
       fromBounds,
+      fromCursorRaw,
       fromCursor,
       chosen: pos,
     });
