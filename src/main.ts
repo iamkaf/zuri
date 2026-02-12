@@ -24,6 +24,7 @@ let tray: Tray | null = null;
 let window: BrowserWindow | null = null;
 let stopWatching: null | (() => void) = null;
 let lastTrayClickPoint: { x: number; y: number } | null = null;
+let lastGoodAnchorPoint: { x: number; y: number } | null = null;
 
 const getAssetPath = (...paths: string[]) => {
   // In dev, this file is built to .vite/build/main.js, so ../../ points at the project root.
@@ -69,7 +70,15 @@ const positionWindow = () => {
   if (!window) return;
 
   const [w, h] = window.getSize();
-  const cursor = lastTrayClickPoint ?? screen.getCursorScreenPoint();
+
+  const rawCursor = lastTrayClickPoint ?? screen.getCursorScreenPoint();
+  const cursorLooksBogus = rawCursor.x === 0 && rawCursor.y === 0;
+  const cursor = !cursorLooksBogus
+    ? rawCursor
+    : lastGoodAnchorPoint ?? (() => {
+        const wa = screen.getPrimaryDisplay().workArea;
+        return { x: Math.round(wa.x + wa.width / 2), y: Math.round(wa.y + wa.height / 2) };
+      })();
 
   // Tray bounds can be bogus on Linux (0,0,0,0). Fallback to cursor anchoring.
   const trayBounds = tray?.getBounds();
@@ -149,12 +158,21 @@ const createTray = () => {
   tray.setToolTip('Zuri');
 
   tray.on('click', (_event, _bounds, position) => {
-    // `tray.getBounds()` is unreliable on some Linux desktops; use click position when available.
-    if (position && typeof position.x === 'number' && typeof position.y === 'number') {
-      lastTrayClickPoint = { x: position.x, y: position.y };
-    } else {
+    // `tray.getBounds()` is unreliable on some Linux desktops.
+    // Prefer the click `position`, otherwise sample cursor immediately in the click handler.
+    const pos =
+      position && typeof position.x === 'number' && typeof position.y === 'number'
+        ? { x: position.x, y: position.y }
+        : screen.getCursorScreenPoint();
+
+    // Some environments (Wayland setups / odd shells) may report (0,0). Treat as bogus.
+    if (pos.x === 0 && pos.y === 0) {
       lastTrayClickPoint = null;
+    } else {
+      lastTrayClickPoint = pos;
+      lastGoodAnchorPoint = pos;
     }
+
     toggleWindow();
   });
 
