@@ -1,7 +1,11 @@
-import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-// https://vitejs.dev/config
-export default defineConfig({
-  plugins: [react()],
+// NOTE: Electron Forge loads Vite config via require() in some setups.
+// @vitejs/plugin-react is ESM-only, so we must use dynamic import.
+export default defineConfig(async () => {
+  const { default: react } = await import('@vitejs/plugin-react');
+
+  return {
+    plugins: [react()],
+  };
 });
