@@ -23,6 +23,7 @@ if (started) {
 let tray: Tray | null = null;
 let window: BrowserWindow | null = null;
 let stopWatching: null | (() => void) = null;
+let lastTrayClickPoint: { x: number; y: number } | null = null;
 
 const getAssetPath = (...paths: string[]) => {
   // In dev, this file is built to .vite/build/main.js, so ../../ points at the project root.
@@ -67,8 +68,8 @@ const createWindow = () => {
 const positionWindow = () => {
   if (!window) return;
 
-  const windowBounds = window.getBounds();
-  const cursor = screen.getCursorScreenPoint();
+  const [w, h] = window.getSize();
+  const cursor = lastTrayClickPoint ?? screen.getCursorScreenPoint();
 
   // Tray bounds can be bogus on Linux (0,0,0,0). Fallback to cursor anchoring.
   const trayBounds = tray?.getBounds();
@@ -91,26 +92,30 @@ const positionWindow = () => {
 
   if (trayBoundsValid && trayBounds) {
     // Center horizontally under/above the tray icon
-    x = Math.round(trayBounds.x + trayBounds.width / 2 - windowBounds.width / 2);
+    x = Math.round(trayBounds.x + trayBounds.width / 2 - w / 2);
 
     // On macOS the tray is at the top; on Windows/Linux it's usually at the bottom.
     y =
       process.platform === 'darwin'
         ? Math.round(trayBounds.y + trayBounds.height + 4)
-        : Math.round(trayBounds.y - windowBounds.height - 4);
+        : Math.round(trayBounds.y - h - 4);
   } else {
-    // Cursor-anchored placement: pop "near the click" and keep inside work area.
-    x = Math.round(cursor.x - windowBounds.width + 14);
-    y = Math.round(cursor.y - windowBounds.height - 14);
+    // Cursor-anchored placement: decide side based on available space.
+    const margin = 12;
+    const placeLeft = cursor.x > workArea.x + workArea.width / 2;
+    const placeUp = cursor.y > workArea.y + workArea.height / 2;
+
+    x = placeLeft ? Math.round(cursor.x - w - margin) : Math.round(cursor.x + margin);
+    y = placeUp ? Math.round(cursor.y - h - margin) : Math.round(cursor.y + margin);
   }
 
   const clampedX = Math.min(
     Math.max(x, workArea.x),
-    workArea.x + workArea.width - windowBounds.width,
+    workArea.x + workArea.width - w,
   );
   const clampedY = Math.min(
     Math.max(y, workArea.y),
-    workArea.y + workArea.height - windowBounds.height,
+    workArea.y + workArea.height - h,
   );
 
   window.setPosition(clampedX, clampedY, false);
@@ -126,7 +131,7 @@ const toggleWindow = () => {
 
   console.log('[zuri] tray bounds', tray?.getBounds());
   console.log('[zuri] window bounds', window.getBounds());
-  console.log('[zuri] cursor', screen.getCursorScreenPoint());
+  console.log('[zuri] cursor', lastTrayClickPoint ?? screen.getCursorScreenPoint());
 
   positionWindow();
   window.show();
@@ -143,7 +148,15 @@ const createTray = () => {
   Menu.setApplicationMenu(null);
   tray.setToolTip('Zuri');
 
-  tray.on('click', toggleWindow);
+  tray.on('click', (_event, _bounds, position) => {
+    // `tray.getBounds()` is unreliable on some Linux desktops; use click position when available.
+    if (position && typeof position.x === 'number' && typeof position.y === 'number') {
+      lastTrayClickPoint = { x: position.x, y: position.y };
+    } else {
+      lastTrayClickPoint = null;
+    }
+    toggleWindow();
+  });
 
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Show', click: () => toggleWindow() },
