@@ -389,8 +389,8 @@ app.on('ready', async () => {
 });
 
 // Keep the app running even if all windows are closed (tray app)
-app.on('window-all-closed', (e) => {
-  e.preventDefault();
+app.on('window-all-closed', () => {
+  // tray app: keep running
 });
 
 app.on('activate', async () => {

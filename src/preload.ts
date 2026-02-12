@@ -64,7 +64,9 @@ const api = {
     onChanged: (cb: () => void) => {
       const listener = () => cb();
       ipcRenderer.on('zuri:md:changed', listener);
-      return () => ipcRenderer.off('zuri:md:changed', listener);
+      return () => {
+        ipcRenderer.off('zuri:md:changed', listener);
+      };
     },
   },
 };
