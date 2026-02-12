@@ -103,7 +103,7 @@ const positionWindow = () => {
   const anchorLooksBogus = raw.x === 0 && raw.y === 0;
   if (anchorLooksBogus) {
     if (fixedAnchorPoint) return;
-    console.warn('[zuri] anchor point bogus; skipping reposition');
+    // anchor point bogus; skipping reposition
     return;
   }
 
@@ -157,13 +157,7 @@ const toggleWindow = () => {
     return;
   }
 
-  console.log('[zuri] tray bounds', tray?.getBounds());
-  console.log('[zuri] window bounds', window.getBounds());
-  console.log('[zuri] cursor', screen.getCursorScreenPoint());
-  console.log('[zuri] anchors', {
-    lastTrayClickPoint,
-    fixedAnchorPoint,
-  });
+  // (logs removed)
 
   positionWindow();
   window.show();
@@ -226,17 +220,7 @@ const createTray = () => {
 
     const pos = fromPosition ?? fromEvent ?? fromBounds ?? fromCursor ?? { x: 0, y: 0 };
 
-    console.log('[zuri] tray click pick', {
-      fromPositionRaw,
-      fromPosition,
-      fromEventRaw,
-      fromEvent,
-      fromBoundsRaw,
-      fromBounds,
-      fromCursorRaw,
-      fromCursor,
-      chosen: pos,
-    });
+    // (logs removed)
 
     // Some environments may report (0,0). Treat as bogus.
     if (pos.x === 0 && pos.y === 0) {
