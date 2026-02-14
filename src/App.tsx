@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -530,15 +530,10 @@ type TaskRowProps = {
   style?: React.CSSProperties;
 };
 
-const TaskRow = ({
-  task,
-  settings,
-  onToggle,
-  onEdit,
-  isDragging,
-  dragHandleProps,
-  style,
-}: TaskRowProps & { ref?: React.Ref<HTMLDivElement> }) => {
+const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow(
+  { task, settings, onToggle, onEdit, isDragging, dragHandleProps, style },
+  ref,
+) {
   const pri =
     settings?.features.priority && task.priority ? (
       <span className={`pill pri-${task.priority}`}>
@@ -562,6 +557,7 @@ const TaskRow = ({
 
   return (
     <div
+      ref={ref}
       className={`task ${task.done ? 'isDone' : ''} ${isDragging ? 'isDragging' : ''}`}
       style={style}
     >
@@ -594,7 +590,7 @@ const TaskRow = ({
       </div>
     </div>
   );
-};
+});
 
 type SettingsContentProps = {
   settings: ZuriSettings | null;
