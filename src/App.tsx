@@ -706,7 +706,23 @@ function TasksContent({
     );
   }
 
-  const rows = currentSection == null ? [] : filteredTasks(currentSection, app.filter);
+  const getVisibleTasks = (
+    section: Section | null,
+    filter: TaskFilter,
+    pendingRemovals: Set<string>,
+  ): Task[] => {
+    if (!section) return [];
+    const base = filteredTasks(section, filter);
+    if (filter === 'open') {
+      const pending = section.tasks.filter(
+        (t) => t.done && pendingRemovals.has(t.id),
+      );
+      return [...base, ...pending];
+    }
+    return base;
+  };
+
+  const rows = getVisibleTasks(currentSection, app.filter, isApple ? app.pendingRemovals : new Set());
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
