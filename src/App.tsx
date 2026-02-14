@@ -31,7 +31,6 @@ import {
   IconApple,
   IconWindows,
   IconSparkle,
-  IconGripVertical,
 } from './Icons';
 import type { DocModel, Section, Task, ThemeId, ZuriSettings } from './preload';
 
@@ -560,14 +559,8 @@ const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow(
       ref={ref}
       className={`task ${task.done ? 'isDone' : ''} ${isDragging ? 'isDragging' : ''}`}
       style={style}
+      {...dragHandleProps}
     >
-      <button
-        className="task-drag-handle"
-        aria-label="Drag to reorder"
-        {...dragHandleProps}
-      >
-        <IconGripVertical size={14} />
-      </button>
       <button
         className="task-check"
         aria-label="Toggle done"

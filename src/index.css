@@ -44,7 +44,7 @@ body {
 
 body {
   font-family: var(--font);
-  background: var(--bg);
+  background: transparent;
   color: var(--text);
   font-size: 13px;
   line-height: 1.4;
@@ -342,7 +342,7 @@ body {
 
 .task {
   display: grid;
-  grid-template-columns: auto auto 1fr auto;
+  grid-template-columns: auto 1fr auto;
   gap: 10px;
   align-items: center;
   padding: 10px 12px;
@@ -351,6 +351,11 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   transition: all var(--transition);
+  cursor: grab;
+}
+
+.task:active {
+  cursor: grabbing;
 }
 
 .task.isDragging {
@@ -358,29 +363,8 @@ body {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
-.task-drag-handle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 20px;
-  padding: 0;
-  margin-right: -4px;
-  border: none;
-  background: transparent;
-  color: var(--text-tertiary);
-  cursor: grab;
-  opacity: 0;
-  transition: opacity var(--transition);
-  flex-shrink: 0;
-}
-
-.task:hover .task-drag-handle {
-  opacity: 1;
-}
-
-.task-drag-handle:active {
-  cursor: grabbing;
+.task button {
+  cursor: pointer;
 }
 
 .task:hover {
