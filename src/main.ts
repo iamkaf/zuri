@@ -54,12 +54,16 @@ const createWindow = async () => {
     fullscreenable: false,
     frame: false,
     transparent: true,
-    // backgroundColor: '#111111',
+    vibrancy: 'under-window',
     skipTaskbar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
+
+  if (process.platform === 'win32') {
+    window.setBackgroundMaterial('mica');
+  }
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     window.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
