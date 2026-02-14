@@ -17,6 +17,10 @@ export type ZuriSettings = {
     effort: boolean;
     notifications: boolean;
   };
+  globalShortcut: {
+    enabled: boolean;
+    accelerator: string;
+  };
   theme: ThemeId;
   notificationTime: string; // HH:MM
   windowBounds?: { x: number; y: number; width: number; height: number };
@@ -40,6 +44,10 @@ export const defaultSettings = (): ZuriSettings => ({
     effort: true,
     notifications: true,
   },
+  globalShortcut: {
+    enabled: false,
+    accelerator: 'CmdOrCtrl+Shift+Space',
+  },
   theme: platformDefaultTheme(),
   notificationTime: '00:00',
 });
@@ -54,6 +62,10 @@ export const loadSettings = async (): Promise<ZuriSettings> => {
       features: {
         ...defaultSettings().features,
         ...(parsed.features ?? {}),
+      },
+      globalShortcut: {
+        ...defaultSettings().globalShortcut,
+        ...(parsed.globalShortcut ?? {}),
       },
     };
   } catch {
@@ -76,6 +88,10 @@ export const patchSettings = async (
     features: {
       ...current.features,
       ...(patch.features ?? {}),
+    },
+    globalShortcut: {
+      ...current.globalShortcut,
+      ...(patch.globalShortcut ?? {}),
     },
   };
   await saveSettings(next);

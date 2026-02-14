@@ -7,6 +7,7 @@ import {
   screen,
   ipcMain,
   dialog,
+  globalShortcut,
 } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
@@ -169,6 +170,20 @@ const toggleWindow = () => {
   window.focus();
 };
 
+const registerGlobalShortcut = (settings: import('./main/settings').ZuriSettings) => {
+  globalShortcut.unregisterAll();
+  if (settings.globalShortcut.enabled) {
+    const ok = globalShortcut.register(settings.globalShortcut.accelerator, () => {
+      toggleWindow();
+    });
+    if (!ok) {
+      console.warn(
+        `Failed to register global shortcut: ${settings.globalShortcut.accelerator}`,
+      );
+    }
+  }
+};
+
 const createTray = () => {
   const iconPath = getAssetPath('assets', 'tray.png');
   const image = nativeImage.createFromPath(iconPath);
@@ -262,6 +277,7 @@ app.on('ready', async () => {
 
   await createWindow();
   createTray();
+  registerGlobalShortcut(await loadSettings());
 
   const startWatchingIfNeeded = async () => {
     if (!window) return;
@@ -287,6 +303,7 @@ app.on('ready', async () => {
   ipcMain.handle('zuri:settings:get', async () => loadSettings());
   ipcMain.handle('zuri:settings:set', async (_evt, patch) => {
     const next = await patchSettings(patch);
+    registerGlobalShortcut(next);
     // restart watcher if markdownPath changed
     await startWatchingIfNeeded();
     // reschedule notifications on any settings change
@@ -404,6 +421,10 @@ app.on('ready', async () => {
   );
 
   await startWatchingIfNeeded();
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
 });
 
 // Keep the app running even if all windows are closed (tray app)

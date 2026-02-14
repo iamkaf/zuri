@@ -15,6 +15,10 @@ export type ZuriSettings = {
     effort: boolean;
     notifications: boolean;
   };
+  globalShortcut: {
+    enabled: boolean;
+    accelerator: string;
+  };
   theme: ThemeId;
   notificationTime: string; // HH:MM
   windowBounds?: { x: number; y: number; width: number; height: number };

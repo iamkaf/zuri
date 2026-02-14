@@ -88,6 +88,38 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
       </section>
 
       <section className="settings-card">
+        <h2 className="settings-card-title">Shortcuts</h2>
+        <label className="toggle">
+          <span>Global shortcut</span>
+          <input
+            type="checkbox"
+            checked={settings.globalShortcut.enabled}
+            onChange={(e) =>
+              void onPatchSettings({
+                globalShortcut: { ...settings.globalShortcut, enabled: e.target.checked },
+              })
+            }
+          />
+        </label>
+        {settings.globalShortcut.enabled && (
+          <div className="settings-row">
+            <span className="settings-label">Accelerator</span>
+            <input
+              className="input"
+              type="text"
+              value={settings.globalShortcut.accelerator}
+              onChange={(e) =>
+                void onPatchSettings({
+                  globalShortcut: { ...settings.globalShortcut, accelerator: e.target.value },
+                })
+              }
+              style={{ width: 200 }}
+            />
+          </div>
+        )}
+      </section>
+
+      <section className="settings-card">
         <h2 className="settings-card-title">Appearance</h2>
         <div className="settings-row">
           <span className="settings-label">Theme</span>
