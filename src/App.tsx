@@ -12,6 +12,9 @@ import {
   IconClock,
   IconFile,
   IconBell,
+  IconApple,
+  IconWindows,
+  IconSparkle,
 } from './Icons';
 import type { DocModel, Section, Task, ThemeId, ZuriSettings } from './preload';
 
@@ -65,7 +68,22 @@ const filteredTasks = (section: Section, filter: TaskFilter): Task[] => {
   return section.tasks.filter((t) => !t.done);
 };
 
-const isWindowsTheme = (theme: ThemeId) => theme.startsWith('windows-');
+const getThemeFamily = (theme: ThemeId): 'apple' | 'windows' | 'open' => {
+  if (theme.startsWith('apple-')) return 'apple';
+  if (theme.startsWith('windows-')) return 'windows';
+  return 'open';
+};
+
+const cycleTheme = (current: ThemeId, family: 'apple' | 'windows' | 'open'): ThemeId => {
+  const themes: Record<string, ThemeId[]> = {
+    apple: ['apple-light', 'apple-dark'],
+    windows: ['windows-light', 'windows-dark'],
+    open: ['open-light', 'open-dark'],
+  };
+  const list = themes[family];
+  const idx = list.indexOf(current);
+  return list[(idx + 1) % list.length];
+};
 
 function App() {
   const [app, setApp] = useState<AppState>(initialState);
@@ -189,93 +207,93 @@ function App() {
     }));
   };
 
-  const theme = app.settings?.theme ?? 'open-dark';
-  const mdPath = app.settings?.markdownPath ?? null;
-  const useNavRail = isWindowsTheme(theme);
+  const onSetThemeFamily = async (family: 'apple' | 'windows' | 'open') => {
+    const current = app.settings?.theme ?? 'open-dark';
+    const currentFamily = getThemeFamily(current);
+    let newTheme: ThemeId;
+    if (family === currentFamily) {
+      newTheme = cycleTheme(current, family);
+    } else {
+      const isDark = current.endsWith('-dark');
+      newTheme = isDark ? `${family}-dark` as ThemeId : `${family}-light` as ThemeId;
+    }
+    await onPatchSettings({ theme: newTheme });
+  };
 
-  if (useNavRail) {
-    return (
-      <div className="app">
-        <Sidebar app={app} onSetPage={onSetPage} />
-        <main className="main">
-          {app.page === 'tasks' ? (
-            <TasksContent
-              app={app}
-              currentSection={currentSection}
-              onPickMarkdown={onPickMarkdown}
-              onSetFilter={(filter) => setApp((prev) => ({ ...prev, filter }))}
-              onToggleTask={onToggleTask}
-              onEditTask={onEditTask}
-              onAddTask={onAddTask}
-            />
-          ) : (
-            <SettingsContent
-              settings={app.settings}
-              onPickMarkdown={onPickMarkdown}
-              onPatchSettings={onPatchSettings}
-            />
-          )}
-        </main>
-        <EditTaskModal
-          editing={app.editing}
-          settings={app.settings}
-          onClose={() => setApp((prev) => ({ ...prev, editing: null }))}
-          onSave={onSaveTask}
-        />
-      </div>
-    );
-  }
+  const theme = app.settings?.theme ?? 'open-dark';
 
   return (
-    <OpenLayout
-      app={app}
-      currentSection={currentSection}
-      mdPath={mdPath}
-      onSetPage={onSetPage}
-      onPickMarkdown={onPickMarkdown}
-      onSetSection={(section) => setApp((prev) => ({ ...prev, section }))}
-      onSetFilter={(filter) => setApp((prev) => ({ ...prev, filter }))}
-      onToggleTask={onToggleTask}
-      onEditTask={onEditTask}
-      onAddSection={onAddSection}
-      onAddTask={onAddTask}
-      onPatchSettings={onPatchSettings}
-    >
+    <div className="app">
+      <aside className="sidebar">
+        <nav className="sidebar-nav">
+          <button
+            className={`sidebar-item ${app.page === 'tasks' ? 'isActive' : ''}`}
+            onClick={() => onSetPage('tasks')}
+            title="Tasks"
+          >
+            <IconTask />
+          </button>
+          <button
+            className={`sidebar-item ${app.page === 'settings' ? 'isActive' : ''}`}
+            onClick={() => onSetPage('settings')}
+            title="Settings"
+          >
+            <IconSettings />
+          </button>
+        </nav>
+        <div className="sidebar-themes">
+          <button
+            className={`sidebar-item ${getThemeFamily(theme) === 'apple' ? 'isActive' : ''}`}
+            onClick={() => void onSetThemeFamily('apple')}
+            title="Apple Theme"
+          >
+            <IconApple />
+          </button>
+          <button
+            className={`sidebar-item ${getThemeFamily(theme) === 'windows' ? 'isActive' : ''}`}
+            onClick={() => void onSetThemeFamily('windows')}
+            title="Windows Theme"
+          >
+            <IconWindows />
+          </button>
+          <button
+            className={`sidebar-item ${getThemeFamily(theme) === 'open' ? 'isActive' : ''}`}
+            onClick={() => void onSetThemeFamily('open')}
+            title="Open Theme"
+          >
+            <IconSparkle />
+          </button>
+        </div>
+      </aside>
+
+      <main className="main">
+        {app.page === 'tasks' ? (
+          <TasksContent
+            app={app}
+            currentSection={currentSection}
+            onPickMarkdown={onPickMarkdown}
+            onSetFilter={(filter) => setApp((prev) => ({ ...prev, filter }))}
+            onToggleTask={onToggleTask}
+            onEditTask={onEditTask}
+            onAddTask={onAddTask}
+            onAddSection={onAddSection}
+          />
+        ) : (
+          <SettingsContent
+            settings={app.settings}
+            onPickMarkdown={onPickMarkdown}
+            onPatchSettings={onPatchSettings}
+          />
+        )}
+      </main>
+
       <EditTaskModal
         editing={app.editing}
         settings={app.settings}
         onClose={() => setApp((prev) => ({ ...prev, editing: null }))}
         onSave={onSaveTask}
       />
-    </OpenLayout>
-  );
-}
-
-type SidebarProps = {
-  app: AppState;
-  onSetPage: (page: Page) => void;
-};
-
-function Sidebar({ app, onSetPage }: SidebarProps) {
-  return (
-    <aside className="sidebar">
-      <nav className="sidebar-nav">
-        <button
-          className={`sidebar-item ${app.page === 'tasks' ? 'isActive' : ''}`}
-          onClick={() => onSetPage('tasks')}
-          title="Tasks"
-        >
-          <IconTask />
-        </button>
-        <button
-          className={`sidebar-item ${app.page === 'settings' ? 'isActive' : ''}`}
-          onClick={() => onSetPage('settings')}
-          title="Settings"
-        >
-          <IconSettings />
-        </button>
-      </nav>
-    </aside>
+    </div>
   );
 }
 
@@ -287,6 +305,7 @@ type TasksContentProps = {
   onToggleTask: (taskId: string) => Promise<void>;
   onEditTask: (taskId: string) => void;
   onAddTask: (title: string) => Promise<void>;
+  onAddSection: () => Promise<void>;
 };
 
 function TasksContent({
@@ -297,6 +316,7 @@ function TasksContent({
   onToggleTask,
   onEditTask,
   onAddTask,
+  onAddSection,
 }: TasksContentProps) {
   const [title, setTitle] = useState('');
 
@@ -322,6 +342,10 @@ function TasksContent({
       <div className="content-header">
         <div className="content-header-top">
           <h1 className="content-title">{currentSection?.name ?? 'Tasks'}</h1>
+          <button className="btn btn-small" onClick={() => void onAddSection()}>
+            <IconPlus size={14} />
+            Section
+          </button>
         </div>
         <div className="filters">
           <button
@@ -361,7 +385,7 @@ function TasksContent({
             onChange={(e) => setTitle(e.target.value)}
           />
           <button className="btn btn-primary" type="submit">
-            <IconPlus size={16} />
+            <IconPlus size={14} />
             Add
           </button>
         </form>
@@ -375,9 +399,9 @@ function TasksContent({
           </div>
         ) : rows.length === 0 ? (
           <div className="empty">
-            <IconCheck className="empty-icon" size={64} />
+            <IconCheck className="empty-icon" size={48} />
             <div className="empty-title">All caught up!</div>
-            <div className="empty-text">No tasks to show. Add one above.</div>
+            <div className="empty-text">No tasks to show.</div>
           </div>
         ) : (
           rows.map((task) => (
@@ -406,20 +430,20 @@ function TaskRow({ task, settings, onToggle, onEdit }: TaskRowProps) {
   const pri =
     settings?.features.priority && task.priority ? (
       <span className={`pill pri-${task.priority}`}>
-        <IconFlag size={12} />
+        <IconFlag size={10} />
         {task.priority}
       </span>
     ) : null;
   const eff =
     settings?.features.effort && task.effort ? (
       <span className="pill effort">
-        <IconClock size={12} />
+        <IconClock size={10} />
         {task.effort}
       </span>
     ) : null;
   const due = task.due ? (
     <span className="pill due">
-      <IconCalendar size={12} />
+      <IconCalendar size={10} />
       {task.due}
     </span>
   ) : null;
@@ -431,7 +455,7 @@ function TaskRow({ task, settings, onToggle, onEdit }: TaskRowProps) {
         aria-label="Toggle done"
         onClick={() => void onToggle(task.id)}
       >
-        {task.done ? <IconCheck size={14} /> : null}
+        {task.done ? <IconCheck size={12} /> : null}
       </button>
       <div className="task-content">
         <div className="task-title">{task.title}</div>
@@ -545,7 +569,7 @@ function SettingsContent({ settings, onPickMarkdown, onPatchSettings }: Settings
             className="input"
             value={settings.theme}
             onChange={(e) => void onPatchSettings({ theme: e.target.value as ThemeId })}
-            style={{ width: 160 }}
+            style={{ width: 140 }}
           >
             {options.map((t) => (
               <option key={t} value={t}>
@@ -560,228 +584,6 @@ function SettingsContent({ settings, onPickMarkdown, onPatchSettings }: Settings
         Settings stored at <code>~/.zuri/settings.json</code>
       </p>
     </div>
-  );
-}
-
-type OpenLayoutProps = {
-  app: AppState;
-  currentSection: Section | null;
-  mdPath: string | null;
-  onSetPage: (page: Page) => void;
-  onPickMarkdown: () => Promise<void>;
-  onSetSection: (section: string | null) => void;
-  onSetFilter: (filter: TaskFilter) => void;
-  onToggleTask: (taskId: string) => Promise<void>;
-  onEditTask: (taskId: string) => void;
-  onAddSection: () => Promise<void>;
-  onAddTask: (title: string) => Promise<void>;
-  onPatchSettings: (patch: Partial<ZuriSettings>) => Promise<void>;
-  children: React.ReactNode;
-};
-
-function OpenLayout({
-  app,
-  currentSection,
-  mdPath,
-  onSetPage,
-  onPickMarkdown,
-  onSetSection,
-  onSetFilter,
-  onToggleTask,
-  onEditTask,
-  onAddSection,
-  onAddTask,
-  onPatchSettings,
-  children,
-}: OpenLayoutProps) {
-  const [title, setTitle] = useState('');
-
-  return (
-    <div className="app">
-      <header className="top">
-        <div className="brand">
-          <div className="glyph">
-            <IconTask size={18} />
-          </div>
-          <div className="brandText">
-            <div className="name">Zuri</div>
-            <div className="meta">{mdPath ?? 'No file selected'}</div>
-          </div>
-        </div>
-        <nav className="nav">
-          <button
-            className={`navBtn ${app.page === 'tasks' ? 'isActive' : ''}`}
-            onClick={() => onSetPage('tasks')}
-          >
-            Tasks
-          </button>
-          <button
-            className={`navBtn ${app.page === 'settings' ? 'isActive' : ''}`}
-            onClick={() => onSetPage('settings')}
-          >
-            Settings
-          </button>
-        </nav>
-      </header>
-
-      <main className="main">
-        {app.page === 'tasks' ? (
-          !app.settings?.markdownPath ? (
-            <div className="empty">
-              <div className="empty-card">
-                <IconFile size={48} style={{ marginBottom: 16, opacity: 0.5 }} />
-                <h2>Pick a markdown file</h2>
-                <p>Zuri reads and writes a single .md file. Changes sync live.</p>
-                <button className="btn btn-primary" onClick={() => void onPickMarkdown()}>
-                  Choose file...
-                </button>
-              </div>
-            </div>
-          ) : (
-            <OpenTasksPage
-              app={app}
-              currentSection={currentSection}
-              onSetSection={onSetSection}
-              onSetFilter={onSetFilter}
-              onToggleTask={onToggleTask}
-              onEditTask={onEditTask}
-              onAddSection={onAddSection}
-              onAddTask={onAddTask}
-              title={title}
-              setTitle={setTitle}
-            />
-          )
-        ) : (
-          <SettingsContent
-            settings={app.settings}
-            onPickMarkdown={onPickMarkdown}
-            onPatchSettings={onPatchSettings}
-          />
-        )}
-      </main>
-
-      {children}
-    </div>
-  );
-}
-
-type OpenTasksPageProps = {
-  app: AppState;
-  currentSection: Section | null;
-  onSetSection: (section: string | null) => void;
-  onSetFilter: (filter: TaskFilter) => void;
-  onToggleTask: (taskId: string) => Promise<void>;
-  onEditTask: (taskId: string) => void;
-  onAddSection: () => Promise<void>;
-  onAddTask: (title: string) => Promise<void>;
-  title: string;
-  setTitle: (title: string) => void;
-};
-
-function OpenTasksPage({
-  app,
-  currentSection,
-  onSetSection,
-  onSetFilter,
-  onToggleTask,
-  onEditTask,
-  onAddSection,
-  onAddTask,
-  title,
-  setTitle,
-}: OpenTasksPageProps) {
-  const rows = currentSection == null ? [] : filteredTasks(currentSection, app.filter);
-
-  return (
-    <section id="pageTasks">
-      <div className="tabsRow" style={{ marginBottom: 12 }}>
-        <div className="tabs" role="tablist" style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
-          {app.model.sections.map((section) => (
-            <button
-              key={section.name}
-              className={`btn btn-small ${section.name === app.section ? 'btn-primary' : ''}`}
-              onClick={() => onSetSection(section.name)}
-              style={{ borderRadius: 999 }}
-            >
-              {section.name}
-            </button>
-          ))}
-        </div>
-        <button className="btn btn-small" onClick={() => void onAddSection()}>
-          <IconPlus size={14} />
-        </button>
-      </div>
-
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <div className="filters" style={{ flex: 1 }}>
-          <button
-            className={`filter-btn ${app.filter === 'open' ? 'isActive' : ''}`}
-            onClick={() => onSetFilter('open')}
-          >
-            Open
-          </button>
-          <button
-            className={`filter-btn ${app.filter === 'all' ? 'isActive' : ''}`}
-            onClick={() => onSetFilter('all')}
-          >
-            All
-          </button>
-          <button
-            className={`filter-btn ${app.filter === 'done' ? 'isActive' : ''}`}
-            onClick={() => onSetFilter('done')}
-          >
-            Done
-          </button>
-        </div>
-      </div>
-
-      <form
-        className="add-task"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const value = title.trim();
-          if (!value) return;
-          void onAddTask(value);
-          setTitle('');
-        }}
-        style={{ marginBottom: 12 }}
-      >
-        <input
-          className="input"
-          placeholder="Add a task..."
-          autoComplete="off"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <button className="btn btn-primary" type="submit">
-          <IconPlus size={16} />
-          Add
-        </button>
-      </form>
-
-      <div className="task-list" style={{ maxHeight: 'calc(100vh - 280px)' }}>
-        {currentSection == null ? (
-          <div className="hint">Create your first section.</div>
-        ) : rows.length === 0 ? (
-          <div className="empty" style={{ height: 200 }}>
-            <IconCheck className="empty-icon" size={48} />
-            <div className="empty-title" style={{ fontSize: 16 }}>
-              All caught up!
-            </div>
-          </div>
-        ) : (
-          rows.map((task) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              settings={app.settings}
-              onToggle={onToggleTask}
-              onEdit={onEditTask}
-            />
-          ))
-        )}
-      </div>
-    </section>
   );
 }
 
