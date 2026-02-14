@@ -1102,3 +1102,209 @@ button {
   font-weight: 600;
   letter-spacing: -0.01em;
 }
+
+/* ========================================
+   APPLE LAYOUT (No Sidebar)
+   ======================================== */
+
+[data-theme^='apple-'] .app.apple-app {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-apple);
+}
+
+[data-theme^='apple-'] .apple-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+[data-theme^='apple-'] .apple-app .content-header {
+  padding-bottom: 10px;
+}
+
+/* ========================================
+   APPLE MENU
+   ======================================== */
+
+.apple-menu-trigger {
+  position: relative;
+}
+
+.apple-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 50;
+  min-width: 160px;
+  padding: 6px;
+  background: var(--bg-secondary);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--inner-highlight), 0 8px 24px rgba(0, 0, 0, 0.2);
+  margin-top: 4px;
+  transform-origin: top right;
+  animation: apple-menu-enter 150ms ease-out both;
+}
+
+.apple-menu.isClosing {
+  animation: apple-menu-exit 100ms ease-in both;
+}
+
+@keyframes apple-menu-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes apple-menu-exit {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+}
+
+.apple-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 100ms ease;
+}
+
+.apple-menu-item:hover {
+  background: var(--accent);
+  color: white;
+}
+
+.apple-menu-item.isActive {
+  color: var(--accent);
+}
+
+.apple-menu-item.isActive:hover {
+  color: white;
+}
+
+.apple-menu-divider {
+  height: 0.5px;
+  background: var(--border);
+  margin: 6px 4px;
+}
+
+/* ========================================
+   APPLE FAB
+   ======================================== */
+
+.apple-fab {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 40;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 0.5px 0 rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.apple-fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25), inset 0 0.5px 0 rgba(255, 255, 255, 0.2);
+}
+
+.apple-fab:active {
+  transform: scale(0.95);
+}
+
+/* ========================================
+   APPLE ADD TASK
+   ======================================== */
+
+.apple-add-task {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  background: var(--bg-secondary);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--inner-highlight), 0 1px 2px rgba(0, 0, 0, 0.05);
+  animation: apple-add-task-enter 200ms ease-out;
+}
+
+@keyframes apple-add-task-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.apple-add-task-check {
+  opacity: 0.4;
+}
+
+.apple-add-task-input {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+  padding: 0;
+}
+
+.apple-add-task-input::placeholder {
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+
+/* ========================================
+   APPLE TASK PENDING REMOVAL
+   ======================================== */
+
+[data-theme^='apple-'] .task.isPendingRemoval {
+  animation: task-pending-removal 1.5s ease;
+}
+
+@keyframes task-pending-removal {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.85; }
+}

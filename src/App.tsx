@@ -31,6 +31,7 @@ import {
   IconApple,
   IconWindows,
   IconSparkle,
+  IconEllipsis,
 } from './Icons';
 import type { DocModel, Section, Task, ThemeId, ZuriSettings } from './preload';
 
@@ -49,6 +50,8 @@ type AppState = {
   section: string | null;
   filter: TaskFilter;
   editing: EditingState | null;
+  showAddInput: boolean;
+  pendingRemovals: Set<string>;
 };
 
 const themeLabel: Record<ThemeId, string> = {
@@ -67,6 +70,8 @@ const initialState: AppState = {
   section: null,
   filter: 'open',
   editing: null,
+  showAddInput: false,
+  pendingRemovals: new Set(),
 };
 
 const ensureSection = (model: DocModel, current: string | null): string | null => {
@@ -157,7 +162,7 @@ function App() {
       : app.model.sections.find((s) => s.name === app.section) ?? null;
 
   const onSetPage = (page: Page) => {
-    setApp((prev) => ({ ...prev, page }));
+    setApp((prev) => ({ ...prev, page, showAddInput: false }));
   };
 
   const onPickMarkdown = async () => {
@@ -203,6 +208,7 @@ function App() {
       ...prev,
       model,
       section: ensureSection(model, prev.section),
+      showAddInput: false,
     }));
   };
 
@@ -246,7 +252,82 @@ function App() {
   };
 
   const theme = app.settings?.theme ?? 'open-dark';
+  const isApple = getThemeFamily(theme) === 'apple';
 
+  if (isApple) {
+    return (
+      <AppleLayout
+        app={app}
+        setApp={setApp}
+        theme={theme}
+        currentSection={currentSection}
+        onSetPage={onSetPage}
+        onSetThemeFamily={onSetThemeFamily}
+        onPickMarkdown={onPickMarkdown}
+        onPatchSettings={onPatchSettings}
+        onToggleTask={onToggleTask}
+        onEditTask={onEditTask}
+        onAddTask={onAddTask}
+        onAddSection={onAddSection}
+        onReorderTask={onReorderTask}
+        onSaveTask={onSaveTask}
+      />
+    );
+  }
+
+  return (
+    <StandardLayout
+      app={app}
+      setApp={setApp}
+      theme={theme}
+      currentSection={currentSection}
+      onSetPage={onSetPage}
+      onSetThemeFamily={onSetThemeFamily}
+      onPickMarkdown={onPickMarkdown}
+      onPatchSettings={onPatchSettings}
+      onToggleTask={onToggleTask}
+      onEditTask={onEditTask}
+      onAddTask={onAddTask}
+      onAddSection={onAddSection}
+      onReorderTask={onReorderTask}
+      onSaveTask={onSaveTask}
+    />
+  );
+}
+
+type LayoutProps = {
+  app: AppState;
+  setApp: React.Dispatch<React.SetStateAction<AppState>>;
+  theme: ThemeId;
+  currentSection: Section | null;
+  onSetPage: (page: Page) => void;
+  onSetThemeFamily: (family: 'apple' | 'windows' | 'open') => Promise<void>;
+  onPickMarkdown: () => Promise<void>;
+  onPatchSettings: (patch: Partial<ZuriSettings>) => Promise<void>;
+  onToggleTask: (taskId: string) => Promise<void>;
+  onEditTask: (taskId: string) => void;
+  onAddTask: (title: string) => Promise<void>;
+  onAddSection: () => Promise<void>;
+  onReorderTask: (section: string, fromIndex: number, toIndex: number) => Promise<void>;
+  onSaveTask: (section: string, task: Task, patch: Partial<Task>) => Promise<void>;
+};
+
+function StandardLayout({
+  app,
+  setApp,
+  theme,
+  currentSection,
+  onSetPage,
+  onSetThemeFamily,
+  onPickMarkdown,
+  onPatchSettings,
+  onToggleTask,
+  onEditTask,
+  onAddTask,
+  onAddSection,
+  onReorderTask,
+  onSaveTask,
+}: LayoutProps) {
   return (
     <div className="app">
       <aside className="sidebar">
@@ -303,6 +384,7 @@ function App() {
             onAddTask={onAddTask}
             onAddSection={onAddSection}
             onReorderTask={onReorderTask}
+            isApple={false}
           />
         ) : (
           <SettingsContent
@@ -323,8 +405,239 @@ function App() {
   );
 }
 
+function AppleLayout({
+  app,
+  setApp,
+  theme,
+  currentSection,
+  onSetPage,
+  onSetThemeFamily,
+  onPickMarkdown,
+  onPatchSettings,
+  onEditTask,
+  onAddTask,
+  onAddSection,
+  onReorderTask,
+  onSaveTask,
+}: LayoutProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const pendingTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  const closeMenu = useCallback(() => {
+    setMenuClosing(true);
+    setTimeout(() => {
+      setMenuOpen(false);
+      setMenuClosing(false);
+    }, 100);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        closeMenu();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen, closeMenu]);
+
+  const onToggleTaskWithDelay = useCallback(async (taskId: string) => {
+    const section = app.section;
+    if (!section) return;
+
+    const task = currentSection?.tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    if (task.done) {
+      const timer = pendingTimersRef.current.get(taskId);
+      if (timer) {
+        clearTimeout(timer);
+        pendingTimersRef.current.delete(taskId);
+        setApp((prev) => {
+          const newSet = new Set(prev.pendingRemovals);
+          newSet.delete(taskId);
+          return { ...prev, pendingRemovals: newSet };
+        });
+      }
+      const model = await window.zuri.doc.toggleTask(section, taskId);
+      setApp((prev) => ({
+        ...prev,
+        model,
+        section: ensureSection(model, prev.section),
+      }));
+    } else {
+      const model = await window.zuri.doc.toggleTask(section, taskId);
+      setApp((prev) => {
+        const newSet = new Set(prev.pendingRemovals);
+        newSet.add(taskId);
+        return {
+          ...prev,
+          model,
+          section: ensureSection(model, prev.section),
+          pendingRemovals: newSet,
+        };
+      });
+      const timer = setTimeout(() => {
+        setApp((prev) => {
+          const newSet = new Set(prev.pendingRemovals);
+          newSet.delete(taskId);
+          return { ...prev, pendingRemovals: newSet };
+        });
+        pendingTimersRef.current.delete(taskId);
+      }, 1500);
+      pendingTimersRef.current.set(taskId, timer);
+    }
+  }, [app.section, currentSection, setApp]);
+
+  useEffect(() => {
+    return () => {
+      pendingTimersRef.current.forEach((timer) => clearTimeout(timer));
+    };
+  }, []);
+
+  return (
+    <div className="app apple-app">
+      <main className="main apple-main">
+        {app.page === 'tasks' ? (
+          <TasksContent
+            app={app}
+            setApp={setApp}
+            currentSection={currentSection}
+            onPickMarkdown={onPickMarkdown}
+            onSetFilter={(filter) => setApp((prev) => ({ ...prev, filter }))}
+            onToggleTask={onToggleTaskWithDelay}
+            onEditTask={onEditTask}
+            onAddTask={onAddTask}
+            onAddSection={onAddSection}
+            onReorderTask={onReorderTask}
+            isApple
+            onOpenMenu={() => setMenuOpen(true)}
+            onCloseMenu={closeMenu}
+            menuOpen={menuOpen}
+            menuClosing={menuClosing}
+            menuRef={menuRef}
+            theme={theme}
+            onSetPage={onSetPage}
+            onSetThemeFamily={onSetThemeFamily}
+          />
+        ) : (
+          <AppleSettingsContent
+            settings={app.settings}
+            onPickMarkdown={onPickMarkdown}
+            onPatchSettings={onPatchSettings}
+            onOpenMenu={() => setMenuOpen(true)}
+            onCloseMenu={closeMenu}
+            menuOpen={menuOpen}
+            menuClosing={menuClosing}
+            menuRef={menuRef}
+            theme={theme}
+            onSetPage={onSetPage}
+            onSetThemeFamily={onSetThemeFamily}
+          />
+        )}
+      </main>
+
+      {app.page === 'tasks' && app.settings?.markdownPath && (
+        <button
+          className="apple-fab"
+          onClick={() => setApp((prev) => ({ ...prev, showAddInput: !prev.showAddInput }))}
+          aria-label="Add task"
+        >
+          <IconPlus size={20} />
+        </button>
+      )}
+
+      <EditTaskModal
+        editing={app.editing}
+        settings={app.settings}
+        onClose={() => setApp((prev) => ({ ...prev, editing: null }))}
+        onSave={onSaveTask}
+      />
+    </div>
+  );
+}
+
+type AppleMenuProps = {
+  menuOpen: boolean;
+  menuClosing?: boolean;
+  menuRef: React.RefObject<HTMLDivElement | null>;
+  theme: ThemeId;
+  page: Page;
+  onSetPage: (page: Page) => void;
+  onSetThemeFamily: (family: 'apple' | 'windows' | 'open') => Promise<void>;
+  onClose: () => void;
+};
+
+function AppleMenu({
+  menuOpen,
+  menuClosing,
+  menuRef,
+  theme,
+  page,
+  onSetPage,
+  onSetThemeFamily,
+  onClose,
+}: AppleMenuProps) {
+  if (!menuOpen) return null;
+
+  const handlePage = (p: Page) => {
+    onSetPage(p);
+    onClose();
+  };
+
+  const handleTheme = (family: 'apple' | 'windows' | 'open') => {
+    void onSetThemeFamily(family);
+    onClose();
+  };
+
+  return (
+    <div ref={menuRef} className={`apple-menu ${menuClosing ? 'isClosing' : ''}`}>
+      <button
+        className={`apple-menu-item ${page === 'tasks' ? 'isActive' : ''}`}
+        onClick={() => handlePage('tasks')}
+      >
+        <IconTask size={16} />
+        <span>Tasks</span>
+      </button>
+      <button
+        className={`apple-menu-item ${page === 'settings' ? 'isActive' : ''}`}
+        onClick={() => handlePage('settings')}
+      >
+        <IconSettings size={16} />
+        <span>Settings</span>
+      </button>
+      <div className="apple-menu-divider" />
+      <button
+        className={`apple-menu-item ${getThemeFamily(theme) === 'apple' ? 'isActive' : ''}`}
+        onClick={() => handleTheme('apple')}
+      >
+        <IconApple size={16} />
+        <span>Apple Theme</span>
+      </button>
+      <button
+        className={`apple-menu-item ${getThemeFamily(theme) === 'windows' ? 'isActive' : ''}`}
+        onClick={() => handleTheme('windows')}
+      >
+        <IconWindows size={16} />
+        <span>Windows Theme</span>
+      </button>
+      <button
+        className={`apple-menu-item ${getThemeFamily(theme) === 'open' ? 'isActive' : ''}`}
+        onClick={() => handleTheme('open')}
+      >
+        <IconSparkle size={16} />
+        <span>Open Theme</span>
+      </button>
+    </div>
+  );
+}
+
 type TasksContentProps = {
   app: AppState;
+  setApp?: React.Dispatch<React.SetStateAction<AppState>>;
   currentSection: Section | null;
   onPickMarkdown: () => Promise<void>;
   onSetFilter: (filter: TaskFilter) => void;
@@ -333,10 +646,20 @@ type TasksContentProps = {
   onAddTask: (title: string) => Promise<void>;
   onAddSection: () => Promise<void>;
   onReorderTask: (section: string, fromIndex: number, toIndex: number) => Promise<void>;
+  isApple: boolean;
+  onOpenMenu?: () => void;
+  onCloseMenu?: () => void;
+  menuOpen?: boolean;
+  menuClosing?: boolean;
+  menuRef?: React.RefObject<HTMLDivElement | null>;
+  theme?: ThemeId;
+  onSetPage?: (page: Page) => void;
+  onSetThemeFamily?: (family: 'apple' | 'windows' | 'open') => Promise<void>;
 };
 
 function TasksContent({
   app,
+  setApp,
   currentSection,
   onPickMarkdown,
   onSetFilter,
@@ -345,6 +668,15 @@ function TasksContent({
   onAddTask,
   onAddSection,
   onReorderTask,
+  isApple,
+  onOpenMenu,
+  onCloseMenu,
+  menuOpen,
+  menuClosing,
+  menuRef,
+  theme,
+  onSetPage,
+  onSetThemeFamily,
 }: TasksContentProps) {
   const [title, setTitle] = useState('');
 
@@ -390,15 +722,45 @@ function TasksContent({
     void onReorderTask(app.section, oldIndex, newIndex);
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const value = title.trim();
+    if (!value) return;
+    void onAddTask(value);
+    setTitle('');
+  };
+
+  const headerRight = isApple ? (
+    <div className="apple-menu-trigger">
+      <button className="btn btn-ghost btn-small" onClick={onOpenMenu}>
+        <IconEllipsis size={16} />
+      </button>
+      {menuOpen && menuRef && theme && onSetPage && onSetThemeFamily && onCloseMenu && (
+        <AppleMenu
+          menuOpen={menuOpen}
+          menuClosing={menuClosing}
+          menuRef={menuRef}
+          theme={theme}
+          page={app.page}
+          onSetPage={onSetPage}
+          onSetThemeFamily={onSetThemeFamily}
+          onClose={onCloseMenu}
+        />
+      )}
+    </div>
+  ) : (
+    <button className="btn btn-small" onClick={() => void onAddSection()}>
+      <IconPlus size={14} />
+      Section
+    </button>
+  );
+
   return (
     <>
       <div className="content-header">
         <div className="content-header-top">
           <h1 className="content-title">{currentSection?.name ?? 'Tasks'}</h1>
-          <button className="btn btn-small" onClick={() => void onAddSection()}>
-            <IconPlus size={14} />
-            Section
-          </button>
+          {headerRight}
         </div>
         <div className="filters">
           <button
@@ -420,28 +782,21 @@ function TasksContent({
             Done
           </button>
         </div>
-        <form
-          className="add-task"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const value = title.trim();
-            if (!value) return;
-            void onAddTask(value);
-            setTitle('');
-          }}
-        >
-          <input
-            className="input"
-            placeholder="Add a task..."
-            autoComplete="off"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <button className="btn btn-primary" type="submit">
-            <IconPlus size={14} />
-            Add
-          </button>
-        </form>
+        {!isApple && (
+          <form className="add-task" onSubmit={handleSubmit}>
+            <input
+              className="input"
+              placeholder="Add a task..."
+              autoComplete="off"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <button className="btn btn-primary" type="submit">
+              <IconPlus size={14} />
+              Add
+            </button>
+          </form>
+        )}
       </div>
 
       <div className="task-list">
@@ -473,11 +828,196 @@ function TasksContent({
                   settings={app.settings}
                   onToggle={onToggleTask}
                   onEdit={onEditTask}
+                  isPendingRemoval={isApple && app.pendingRemovals.has(task.id)}
                 />
               ))}
             </SortableContext>
           </DndContext>
         )}
+        {isApple && app.showAddInput && (
+          <div className="apple-add-task">
+            <div className="task-check apple-add-task-check" />
+            <input
+              className="apple-add-task-input"
+              placeholder="Add a task..."
+              autoComplete="off"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const value = title.trim();
+                  if (value) {
+                    void onAddTask(value);
+                    setTitle('');
+                  }
+                }
+                if (e.key === 'Escape') {
+                  setTitle('');
+                  if (setApp) setApp((prev) => ({ ...prev, showAddInput: false }));
+                }
+              }}
+              autoFocus
+            />
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+type AppleSettingsContentProps = {
+  settings: ZuriSettings | null;
+  onPickMarkdown: () => Promise<void>;
+  onPatchSettings: (patch: Partial<ZuriSettings>) => Promise<void>;
+  onOpenMenu: () => void;
+  onCloseMenu: () => void;
+  menuOpen: boolean;
+  menuClosing?: boolean;
+  menuRef: React.RefObject<HTMLDivElement | null>;
+  theme: ThemeId;
+  onSetPage: (page: Page) => void;
+  onSetThemeFamily: (family: 'apple' | 'windows' | 'open') => Promise<void>;
+};
+
+function AppleSettingsContent({
+  settings,
+  onPickMarkdown,
+  onPatchSettings,
+  onOpenMenu,
+  onCloseMenu,
+  menuOpen,
+  menuClosing,
+  menuRef,
+  theme,
+  onSetPage,
+  onSetThemeFamily,
+}: AppleSettingsContentProps) {
+  if (!settings) return null;
+
+  const options = Object.keys(themeLabel) as ThemeId[];
+
+  return (
+    <>
+      <div className="content-header">
+        <div className="content-header-top">
+          <h1 className="content-title">Settings</h1>
+          <div className="apple-menu-trigger">
+            <button className="btn btn-ghost btn-small" onClick={onOpenMenu}>
+              <IconEllipsis size={16} />
+            </button>
+            {menuOpen && (
+              <AppleMenu
+                menuOpen={menuOpen}
+                menuClosing={menuClosing}
+                menuRef={menuRef}
+                theme={theme}
+                page="settings"
+                onSetPage={onSetPage}
+                onSetThemeFamily={onSetThemeFamily}
+                onClose={onCloseMenu}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="settings">
+        <section className="settings-card">
+          <h2 className="settings-card-title">File</h2>
+          <div className="settings-row">
+            <span className="settings-label">Markdown file</span>
+            <div className="settings-value">
+              <span className="settings-path">
+                {settings.markdownPath || <em>none</em>}
+              </span>
+              <button className="btn btn-small" onClick={() => void onPickMarkdown()}>
+                Choose...
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="settings-card">
+          <h2 className="settings-card-title">Features</h2>
+          <label className="toggle">
+            <span>Priority levels</span>
+            <input
+              type="checkbox"
+              checked={settings.features.priority}
+              onChange={(e) =>
+                void onPatchSettings({
+                  features: { ...settings.features, priority: e.target.checked },
+                })
+              }
+            />
+          </label>
+          <label className="toggle">
+            <span>Effort estimates</span>
+            <input
+              type="checkbox"
+              checked={settings.features.effort}
+              onChange={(e) =>
+                void onPatchSettings({
+                  features: { ...settings.features, effort: e.target.checked },
+                })
+              }
+            />
+          </label>
+          <label className="toggle">
+            <span>
+              <IconBell size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+              Notifications
+            </span>
+            <input
+              type="checkbox"
+              checked={settings.features.notifications}
+              onChange={(e) =>
+                void onPatchSettings({
+                  features: { ...settings.features, notifications: e.target.checked },
+                })
+              }
+            />
+          </label>
+          {settings.features.notifications && (
+            <div className="settings-row">
+              <span className="settings-label">Notify at</span>
+              <input
+                className="input"
+                type="time"
+                value={settings.notificationTime}
+                onChange={(e) =>
+                  void onPatchSettings({
+                    notificationTime: e.target.value || '09:00',
+                  })
+                }
+                style={{ width: 120 }}
+              />
+            </div>
+          )}
+        </section>
+
+        <section className="settings-card">
+          <h2 className="settings-card-title">Appearance</h2>
+          <div className="settings-row">
+            <span className="settings-label">Theme</span>
+            <select
+              className="input"
+              value={settings.theme}
+              onChange={(e) => void onPatchSettings({ theme: e.target.value as ThemeId })}
+              style={{ width: 140 }}
+            >
+              {options.map((t) => (
+                <option key={t} value={t}>
+                  {themeLabel[t]}
+                </option>
+              ))}
+            </select>
+          </div>
+        </section>
+
+        <p className="settings-foot">
+          Settings stored at <code>~/.zuri/settings.json</code>
+        </p>
       </div>
     </>
   );
@@ -488,9 +1028,10 @@ type SortableTaskRowProps = {
   settings: ZuriSettings | null;
   onToggle: (taskId: string) => Promise<void>;
   onEdit: (taskId: string) => void;
+  isPendingRemoval?: boolean;
 };
 
-function SortableTaskRow({ task, settings, onToggle, onEdit }: SortableTaskRowProps) {
+function SortableTaskRow({ task, settings, onToggle, onEdit, isPendingRemoval }: SortableTaskRowProps) {
   const {
     attributes,
     listeners,
@@ -515,6 +1056,7 @@ function SortableTaskRow({ task, settings, onToggle, onEdit }: SortableTaskRowPr
       onEdit={onEdit}
       isDragging={isDragging}
       dragHandleProps={{ ...attributes, ...listeners }}
+      isPendingRemoval={isPendingRemoval}
     />
   );
 }
@@ -527,10 +1069,11 @@ type TaskRowProps = {
   isDragging?: boolean;
   dragHandleProps?: Record<string, unknown>;
   style?: React.CSSProperties;
+  isPendingRemoval?: boolean;
 };
 
 const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow(
-  { task, settings, onToggle, onEdit, isDragging, dragHandleProps, style },
+  { task, settings, onToggle, onEdit, isDragging, dragHandleProps, style, isPendingRemoval },
   ref,
 ) {
   const pri =
@@ -557,7 +1100,7 @@ const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow(
   return (
     <div
       ref={ref}
-      className={`task ${task.done ? 'isDone' : ''} ${isDragging ? 'isDragging' : ''}`}
+      className={`task ${task.done ? 'isDone' : ''} ${isDragging ? 'isDragging' : ''} ${isPendingRemoval ? 'isPendingRemoval' : ''}`}
       style={style}
       {...dragHandleProps}
     >

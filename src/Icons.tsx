@@ -402,3 +402,20 @@ export function IconGripVertical({ size = 16, style, className }: IconProps) {
     </svg>
   );
 }
+
+export function IconEllipsis({ size = 16, style, className }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      style={style}
+      className={className}
+    >
+      <circle cx="3" cy="8" r="1.5" fill="currentColor" />
+      <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+      <circle cx="13" cy="8" r="1.5" fill="currentColor" />
+    </svg>
+  );
+}
