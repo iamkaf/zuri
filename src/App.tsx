@@ -1,5 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   IconCheck,
   IconPlus,
   IconSettings,
@@ -15,6 +31,7 @@ import {
   IconApple,
   IconWindows,
   IconSparkle,
+  IconGripVertical,
 } from './Icons';
 import type { DocModel, Section, Task, ThemeId, ZuriSettings } from './preload';
 
@@ -207,6 +224,15 @@ function App() {
     }));
   };
 
+  const onReorderTask = async (section: string, fromIndex: number, toIndex: number) => {
+    const model = await window.zuri.doc.reorderTask(section, fromIndex, toIndex);
+    setApp((prev) => ({
+      ...prev,
+      model,
+      section: ensureSection(model, prev.section),
+    }));
+  };
+
   const onSetThemeFamily = async (family: 'apple' | 'windows' | 'open') => {
     const current = app.settings?.theme ?? 'open-dark';
     const currentFamily = getThemeFamily(current);
@@ -277,6 +303,7 @@ function App() {
             onEditTask={onEditTask}
             onAddTask={onAddTask}
             onAddSection={onAddSection}
+            onReorderTask={onReorderTask}
           />
         ) : (
           <SettingsContent
@@ -306,6 +333,7 @@ type TasksContentProps = {
   onEditTask: (taskId: string) => void;
   onAddTask: (title: string) => Promise<void>;
   onAddSection: () => Promise<void>;
+  onReorderTask: (section: string, fromIndex: number, toIndex: number) => Promise<void>;
 };
 
 function TasksContent({
@@ -317,8 +345,20 @@ function TasksContent({
   onEditTask,
   onAddTask,
   onAddSection,
+  onReorderTask,
 }: TasksContentProps) {
   const [title, setTitle] = useState('');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   if (!app.settings?.markdownPath) {
     return (
@@ -336,6 +376,20 @@ function TasksContent({
   }
 
   const rows = currentSection == null ? [] : filteredTasks(currentSection, app.filter);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    if (!app.section) return;
+
+    const allTasks = currentSection?.tasks ?? [];
+    const oldIndex = allTasks.findIndex((t) => t.id === active.id);
+    const newIndex = allTasks.findIndex((t) => t.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    void onReorderTask(app.section, oldIndex, newIndex);
+  };
 
   return (
     <>
@@ -404,18 +458,65 @@ function TasksContent({
             <div className="empty-text">No tasks to show.</div>
           </div>
         ) : (
-          rows.map((task) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              settings={app.settings}
-              onToggle={onToggleTask}
-              onEdit={onEditTask}
-            />
-          ))
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={rows.map((t) => t.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {rows.map((task) => (
+                <SortableTaskRow
+                  key={task.id}
+                  task={task}
+                  settings={app.settings}
+                  onToggle={onToggleTask}
+                  onEdit={onEditTask}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         )}
       </div>
     </>
+  );
+}
+
+type SortableTaskRowProps = {
+  task: Task;
+  settings: ZuriSettings | null;
+  onToggle: (taskId: string) => Promise<void>;
+  onEdit: (taskId: string) => void;
+};
+
+function SortableTaskRow({ task, settings, onToggle, onEdit }: SortableTaskRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <TaskRow
+      ref={setNodeRef}
+      style={style}
+      task={task}
+      settings={settings}
+      onToggle={onToggle}
+      onEdit={onEdit}
+      isDragging={isDragging}
+      dragHandleProps={{ ...attributes, ...listeners }}
+    />
   );
 }
 
@@ -424,9 +525,20 @@ type TaskRowProps = {
   settings: ZuriSettings | null;
   onToggle: (taskId: string) => Promise<void>;
   onEdit: (taskId: string) => void;
+  isDragging?: boolean;
+  dragHandleProps?: Record<string, unknown>;
+  style?: React.CSSProperties;
 };
 
-function TaskRow({ task, settings, onToggle, onEdit }: TaskRowProps) {
+const TaskRow = ({
+  task,
+  settings,
+  onToggle,
+  onEdit,
+  isDragging,
+  dragHandleProps,
+  style,
+}: TaskRowProps & { ref?: React.Ref<HTMLDivElement> }) => {
   const pri =
     settings?.features.priority && task.priority ? (
       <span className={`pill pri-${task.priority}`}>
@@ -449,7 +561,17 @@ function TaskRow({ task, settings, onToggle, onEdit }: TaskRowProps) {
   ) : null;
 
   return (
-    <div className={`task ${task.done ? 'isDone' : ''}`}>
+    <div
+      className={`task ${task.done ? 'isDone' : ''} ${isDragging ? 'isDragging' : ''}`}
+      style={style}
+    >
+      <button
+        className="task-drag-handle"
+        aria-label="Drag to reorder"
+        {...dragHandleProps}
+      >
+        <IconGripVertical size={14} />
+      </button>
       <button
         className="task-check"
         aria-label="Toggle done"
@@ -472,7 +594,7 @@ function TaskRow({ task, settings, onToggle, onEdit }: TaskRowProps) {
       </div>
     </div>
   );
-}
+};
 
 type SettingsContentProps = {
   settings: ZuriSettings | null;

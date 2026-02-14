@@ -382,3 +382,23 @@ export function IconSparkle({ size = 18, style, className }: IconProps) {
     </svg>
   );
 }
+
+export function IconGripVertical({ size = 16, style, className }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      style={style}
+      className={className}
+    >
+      <circle cx="5" cy="3" r="1" fill="currentColor" />
+      <circle cx="5" cy="8" r="1" fill="currentColor" />
+      <circle cx="5" cy="13" r="1" fill="currentColor" />
+      <circle cx="11" cy="3" r="1" fill="currentColor" />
+      <circle cx="11" cy="8" r="1" fill="currentColor" />
+      <circle cx="11" cy="13" r="1" fill="currentColor" />
+    </svg>
+  );
+}

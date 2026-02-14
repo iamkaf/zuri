@@ -53,8 +53,8 @@ const createWindow = async () => {
     maximizable: false,
     fullscreenable: false,
     frame: false,
-    transparent: false,
-    backgroundColor: '#111111',
+    transparent: true,
+    // backgroundColor: '#111111',
     skipTaskbar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -382,6 +382,19 @@ app.on('ready', async () => {
           task.effort = args.patch.effort as Task['effort'];
         if (typeof args.patch.due === 'string' || args.patch.due === undefined)
           task.due = args.patch.due;
+      }),
+  );
+
+  ipcMain.handle(
+    'zuri:doc:reorderTask',
+    async (_evt, args: { section: string; fromIndex: number; toIndex: number }) =>
+      mutate((m) => {
+        const sec = m.sections.find((s) => s.name === args.section);
+        if (!sec || args.fromIndex === args.toIndex) return;
+        if (args.fromIndex < 0 || args.fromIndex >= sec.tasks.length) return;
+        if (args.toIndex < 0 || args.toIndex >= sec.tasks.length) return;
+        const [task] = sec.tasks.splice(args.fromIndex, 1);
+        sec.tasks.splice(args.toIndex, 0, task);
       }),
   );
 
