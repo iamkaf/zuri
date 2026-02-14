@@ -54,6 +54,24 @@ function App() {
   }, [refreshAll]);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+        const el = document.activeElement;
+        const tag = el?.tagName.toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') {
+          const isAddTask =
+            (el as HTMLInputElement).placeholder === 'Add a task...';
+          if (!isAddTask) return;
+        }
+        e.preventDefault();
+        setApp((prev) => ({ ...prev, page: 'tasks', showAddInput: true }));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = window.zuri.doc.onChanged(async () => {
       if (!settingsRef.current?.markdownPath) return;
       const model = await window.zuri.doc.get();

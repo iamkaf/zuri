@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -70,6 +70,14 @@ export function TasksContent({
   onSetThemeFamily,
 }: TasksContentProps) {
   const [title, setTitle] = useState('');
+  const addInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (app.showAddInput && !isApple) {
+      addInputRef.current?.focus();
+      if (setApp) setApp((prev) => ({ ...prev, showAddInput: false }));
+    }
+  }, [app.showAddInput, isApple, setApp]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -192,6 +200,7 @@ export function TasksContent({
         {!isApple && (
           <form className="add-task" onSubmit={handleSubmit}>
             <input
+              ref={addInputRef}
               className="input"
               placeholder="Add a task..."
               autoComplete="off"
