@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { IconClose } from '../Icons';
 import type { Task, ZuriSettings } from '../preload';
 import type { EditingState } from '../types';
@@ -24,16 +24,44 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
     setDue(editing.task.due ?? '');
   }, [editing]);
 
-  if (!editing || !settings) return null;
-
-  const canPriority = settings.features.priority;
-  const canEffort = settings.features.effort;
-
   const isPriority = (value: string): value is Task['priority'] =>
     ['P0', 'P1', 'P2', 'P3'].includes(value);
 
   const isEffort = (value: string): value is Task['effort'] =>
     ['XS', 'S', 'M', 'L', 'XL'].includes(value);
+
+  const handleSave = useCallback(() => {
+    if (!editing) return;
+    const patch: Partial<Task> = {
+      title: title.trim() || editing.task.title,
+      priority: isPriority(priority) ? priority : undefined,
+      effort: isEffort(effort) ? effort : undefined,
+      due: due.trim() === '' ? undefined : due.trim(),
+    };
+    void onSave(editing.section, editing.task, patch);
+  }, [editing, title, priority, effort, due, onSave]);
+
+  useEffect(() => {
+    if (!editing) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [editing, onClose, handleSave]);
+
+  if (!editing || !settings) return null;
+
+  const canPriority = settings.features.priority;
+  const canEffort = settings.features.effort;
 
   return (
     <div className="modal" aria-hidden="false">
@@ -110,15 +138,7 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
             </button>
             <button
               className="btn btn-primary"
-              onClick={() => {
-                const patch: Partial<Task> = {
-                  title: title.trim() || editing.task.title,
-                  priority: isPriority(priority) ? priority : undefined,
-                  effort: isEffort(effort) ? effort : undefined,
-                  due: due.trim() === '' ? undefined : due.trim(),
-                };
-                void onSave(editing.section, editing.task, patch);
-              }}
+              onClick={handleSave}
             >
               Save
             </button>

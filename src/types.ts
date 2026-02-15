@@ -17,6 +17,7 @@ export type AppState = {
   editing: EditingState | null;
   showAddInput: boolean;
   pendingRemovals: Set<string>;
+  focusedTaskId: string | null;
 };
 
 export type LayoutProps = {

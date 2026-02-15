@@ -79,6 +79,12 @@ export function TasksContent({
     }
   }, [app.showAddInput, isApple, setApp]);
 
+  useEffect(() => {
+    if (!app.focusedTaskId) return;
+    const el = document.querySelector(`[data-task-id="${app.focusedTaskId}"]`);
+    el?.scrollIntoView({ block: 'nearest' });
+  }, [app.focusedTaskId]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -206,6 +212,13 @@ export function TasksContent({
               autoComplete="off"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.stopPropagation();
+                  setTitle('');
+                  addInputRef.current?.blur();
+                }
+              }}
             />
             <button className="btn btn-primary" type="submit">
               <IconPlus size={14} />
@@ -245,6 +258,7 @@ export function TasksContent({
                   onToggle={onToggleTask}
                   onEdit={onEditTask}
                   isPendingRemoval={isApple && app.pendingRemovals.has(task.id)}
+                  isFocused={app.focusedTaskId === task.id}
                 />
               ))}
             </SortableContext>
@@ -269,6 +283,7 @@ export function TasksContent({
                   }
                 }
                 if (e.key === 'Escape') {
+                  e.stopPropagation();
                   setTitle('');
                   if (setApp) setApp((prev) => ({ ...prev, showAddInput: false }));
                 }

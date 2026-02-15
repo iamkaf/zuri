@@ -299,6 +299,11 @@ app.on('ready', async () => {
     });
   };
 
+  // IPC: window
+  ipcMain.on('zuri:window:hide', () => {
+    if (window && window.isVisible()) window.hide();
+  });
+
   // IPC: settings
   ipcMain.handle('zuri:settings:get', async () => loadSettings());
   ipcMain.handle('zuri:settings:set', async (_evt, patch) => {

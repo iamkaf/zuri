@@ -371,6 +371,11 @@ body {
   border-color: var(--border-strong);
 }
 
+.task.isFocused {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
 .task.isDone {
   opacity: 0.55;
 }
@@ -476,7 +481,8 @@ body {
   transition: opacity var(--transition);
 }
 
-.task:hover .task-actions {
+.task:hover .task-actions,
+.task.isFocused .task-actions {
   opacity: 1;
 }
 
@@ -996,6 +1002,11 @@ button {
 
 [data-theme^='apple-'] .task:hover {
   box-shadow: var(--inner-highlight), 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme^='apple-'] .task.isFocused {
+  border-color: var(--accent);
+  box-shadow: var(--inner-highlight), 0 0 0 1px var(--accent);
 }
 
 [data-theme^='apple-'] .task.isDragging {

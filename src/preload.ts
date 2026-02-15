@@ -48,6 +48,9 @@ export type DocModel = {
 };
 
 const api = {
+  window: {
+    hide: () => ipcRenderer.send('zuri:window:hide'),
+  },
   settings: {
     get: () => ipcRenderer.invoke('zuri:settings:get') as Promise<ZuriSettings>,
     set: (patch: Partial<ZuriSettings>) =>

@@ -19,10 +19,11 @@ export type TaskRowProps = {
   dragHandleProps?: Record<string, unknown>;
   style?: React.CSSProperties;
   isPendingRemoval?: boolean;
+  isFocused?: boolean;
 };
 
 export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow(
-  { task, settings, onToggle, onEdit, isDragging, dragHandleProps, style, isPendingRemoval },
+  { task, settings, onToggle, onEdit, isDragging, dragHandleProps, style, isPendingRemoval, isFocused },
   ref,
 ) {
   const pri =
@@ -49,7 +50,8 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
   return (
     <div
       ref={ref}
-      className={`task ${task.done ? 'isDone' : ''} ${isDragging ? 'isDragging' : ''} ${isPendingRemoval ? 'isPendingRemoval' : ''}`}
+      className={`task ${task.done ? 'isDone' : ''} ${isDragging ? 'isDragging' : ''} ${isPendingRemoval ? 'isPendingRemoval' : ''} ${isFocused ? 'isFocused' : ''}`}
+      data-task-id={task.id}
       style={style}
       {...dragHandleProps}
     >
@@ -83,9 +85,10 @@ export type SortableTaskRowProps = {
   onToggle: (taskId: string) => Promise<void>;
   onEdit: (taskId: string) => void;
   isPendingRemoval?: boolean;
+  isFocused?: boolean;
 };
 
-export function SortableTaskRow({ task, settings, onToggle, onEdit, isPendingRemoval }: SortableTaskRowProps) {
+export function SortableTaskRow({ task, settings, onToggle, onEdit, isPendingRemoval, isFocused }: SortableTaskRowProps) {
   const {
     attributes,
     listeners,
@@ -111,6 +114,7 @@ export function SortableTaskRow({ task, settings, onToggle, onEdit, isPendingRem
       isDragging={isDragging}
       dragHandleProps={{ ...attributes, ...listeners }}
       isPendingRemoval={isPendingRemoval}
+      isFocused={isFocused}
     />
   );
 }
