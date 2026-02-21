@@ -180,7 +180,7 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
                 style={{ flex: 1 }}
               />
               {due && (
-                <button className="btn btn-ghost btn-small" type="button" onClick={() => setDue('')}>
+                <button className="btn btn-ghost" type="button" onClick={() => setDue('')}>
                   Clear
                 </button>
               )}
