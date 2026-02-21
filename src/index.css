@@ -474,6 +474,11 @@ body {
   color: var(--accent);
 }
 
+.pill.recur {
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+}
+
 .task-actions {
   display: flex;
   gap: 4px;
