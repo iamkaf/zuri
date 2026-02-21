@@ -171,12 +171,20 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
 
           <label className="sheet-field">
             <span>Due date</span>
-            <input
-              className="input"
-              type="date"
-              value={due}
-              onChange={(e) => setDue(e.target.value)}
-            />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                className="input"
+                type="date"
+                value={due}
+                onChange={(e) => setDue(e.target.value)}
+                style={{ flex: 1 }}
+              />
+              {due && (
+                <button className="btn btn-ghost btn-small" type="button" onClick={() => setDue('')}>
+                  Clear
+                </button>
+              )}
+            </div>
           </label>
 
           <label className={`sheet-field ${canRecurring ? '' : 'isDisabled'}`}>
