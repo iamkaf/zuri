@@ -1,6 +1,4 @@
-import type { DocModel, Section, ThemeId } from './preload';
-import type { Task } from './preload';
-import type { TaskFilter } from './types';
+import type { ThemeId } from '../preload';
 
 export const themeLabel: Record<ThemeId, string> = {
   'open-light': 'Open Light',
@@ -26,19 +24,4 @@ export const cycleTheme = (current: ThemeId, family: 'apple' | 'windows' | 'open
   const list = themes[family];
   const idx = list.indexOf(current);
   return list[(idx + 1) % list.length];
-};
-
-export const ensureSection = (model: DocModel, current: string | null): string | null => {
-  if (!current) {
-    return model.sections[0]?.name ?? null;
-  }
-  return model.sections.some((s) => s.name === current)
-    ? current
-    : model.sections[0]?.name ?? null;
-};
-
-export const filteredTasks = (section: Section, filter: TaskFilter): Task[] => {
-  if (filter === 'all') return section.tasks;
-  if (filter === 'done') return section.tasks.filter((t) => t.done);
-  return section.tasks.filter((t) => !t.done);
 };

@@ -1,6 +1,7 @@
 import { IconBell } from '../Icons';
 import type { ThemeId, ZuriSettings } from '../preload';
-import { themeLabel } from '../theme';
+import { themeLabel } from '../lib/theme';
+import styles from './SettingsForm.module.css';
 
 export type SettingsFormProps = {
   settings: ZuriSettings;
@@ -12,13 +13,13 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
   const options = Object.keys(themeLabel) as ThemeId[];
 
   return (
-    <div className="settings">
-      <section className="settings-card">
-        <h2 className="settings-card-title">File</h2>
-        <div className="settings-row">
-          <span className="settings-label">Markdown file</span>
-          <div className="settings-value">
-            <span className="settings-path">
+    <div className={styles.settings}>
+      <section className={styles.settingsCard}>
+        <h2 className={styles.settingsCardTitle}>File</h2>
+        <div className={styles.settingsRow}>
+          <span className={styles.settingsLabel}>Markdown file</span>
+          <div className={styles.settingsValue}>
+            <span className={styles.settingsPath}>
               {settings.markdownPath || <em>none</em>}
             </span>
             <button className="btn btn-small" onClick={() => void onPickMarkdown()}>
@@ -28,9 +29,9 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
         </div>
       </section>
 
-      <section className="settings-card">
-        <h2 className="settings-card-title">Features</h2>
-        <label className="toggle">
+      <section className={styles.settingsCard}>
+        <h2 className={styles.settingsCardTitle}>Features</h2>
+        <label className={styles.toggle}>
           <span>Priority levels</span>
           <input
             type="checkbox"
@@ -42,7 +43,7 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
             }
           />
         </label>
-        <label className="toggle">
+        <label className={styles.toggle}>
           <span>Effort estimates</span>
           <input
             type="checkbox"
@@ -54,7 +55,7 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
             }
           />
         </label>
-        <label className="toggle">
+        <label className={styles.toggle}>
           <span>
             <IconBell size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
             Notifications
@@ -69,7 +70,7 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
             }
           />
         </label>
-        <label className="toggle">
+        <label className={styles.toggle}>
           <span>Recurring tasks</span>
           <input
             type="checkbox"
@@ -82,8 +83,8 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
           />
         </label>
         {settings.features.notifications && (
-          <div className="settings-row">
-            <span className="settings-label">Notify at</span>
+          <div className={styles.settingsRow}>
+            <span className={styles.settingsLabel}>Notify at</span>
             <input
               className="input"
               type="time"
@@ -99,9 +100,9 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
         )}
       </section>
 
-      <section className="settings-card">
-        <h2 className="settings-card-title">Shortcuts</h2>
-        <label className="toggle">
+      <section className={styles.settingsCard}>
+        <h2 className={styles.settingsCardTitle}>Shortcuts</h2>
+        <label className={styles.toggle}>
           <span>Global shortcut</span>
           <input
             type="checkbox"
@@ -114,8 +115,8 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
           />
         </label>
         {settings.globalShortcut.enabled && (
-          <div className="settings-row">
-            <span className="settings-label">Accelerator</span>
+          <div className={styles.settingsRow}>
+            <span className={styles.settingsLabel}>Accelerator</span>
             <input
               className="input"
               type="text"
@@ -131,10 +132,22 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
         )}
       </section>
 
-      <section className="settings-card">
-        <h2 className="settings-card-title">Appearance</h2>
-        <div className="settings-row">
-          <span className="settings-label">Theme</span>
+      <section className={styles.settingsCard}>
+        <h2 className={styles.settingsCardTitle}>Appearance</h2>
+        <div className={styles.settingsRow}>
+          <span className={styles.settingsLabel}>Layout</span>
+          <select
+            className="input"
+            value={settings.layout}
+            onChange={(e) => void onPatchSettings({ layout: e.target.value as 'apple' | 'standard' })}
+            style={{ width: 140 }}
+          >
+            <option value="standard">Standard</option>
+            <option value="apple">Apple</option>
+          </select>
+        </div>
+        <div className={styles.settingsRow}>
+          <span className={styles.settingsLabel}>Theme</span>
           <select
             className="input"
             value={settings.theme}
@@ -150,9 +163,9 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
         </div>
       </section>
 
-      <section className="settings-card">
-        <h2 className="settings-card-title">Developer</h2>
-        <label className="toggle">
+      <section className={styles.settingsCard}>
+        <h2 className={styles.settingsCardTitle}>Developer</h2>
+        <label className={styles.toggle}>
           <span>Developer mode</span>
           <input
             type="checkbox"
@@ -162,7 +175,7 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
         </label>
       </section>
 
-      <p className="settings-foot">
+      <p className={styles.settingsFoot}>
         Settings stored at <code>~/.zuri/settings.json</code>
       </p>
     </div>

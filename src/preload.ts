@@ -21,6 +21,7 @@ export type ZuriSettings = {
     accelerator: string;
   };
   theme: ThemeId;
+  layout: 'apple' | 'standard';
   notificationTime: string; // HH:MM
   devMode: boolean;
   windowBounds?: { x: number; y: number; width: number; height: number };

@@ -1,0 +1,10 @@
+.taskList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+/* Apple theme overrides */
+[data-theme^='apple-'] .taskList {
+  padding: 12px;
+}

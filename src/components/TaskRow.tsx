@@ -9,31 +9,9 @@ import {
   IconClock,
   IconRepeat,
 } from '../Icons';
-
-const pad2 = (n: number) => String(n).padStart(2, '0');
-const isoToday = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-};
-
-// Returns the status suffix shown inside the recur pill, e.g. "· done today" or "· Feb 21"
-const recurStateSuffix = (due: string | undefined, lastDone: string | undefined): string => {
-  const today = isoToday();
-  if (lastDone === today) return ' · done today';
-  if (due) {
-    const diffMs = new Date(due + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime();
-    const diffDays = Math.round(diffMs / 86_400_000);
-    if (diffDays < 0) return ` · ${Math.abs(diffDays)}d overdue`;
-    if (diffDays === 0) return ' · due today';
-    if (diffDays === 1) return ' · tomorrow';
-    return ` · ${new Date(due + 'T00:00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' })}`;
-  }
-  if (lastDone) {
-    return ` · done ${new Date(lastDone + 'T00:00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' })}`;
-  }
-  return '';
-};
 import type { Task, ZuriSettings } from '../preload';
+import { isoToday, recurStateSuffix } from '../lib/date';
+import styles from './TaskRow.module.css';
 
 export type TaskRowProps = {
   task: Task;
@@ -53,14 +31,14 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
 ) {
   const pri =
     settings?.features.priority && task.priority ? (
-      <span className={`pill pri-${task.priority}`}>
+      <span className={`${styles.pill} ${task.priority === 'P0' ? styles.priP0 : task.priority === 'P1' ? styles.priP1 : task.priority === 'P2' ? styles.priP2 : styles.priP3}`}>
         <IconFlag size={10} />
         {task.priority}
       </span>
     ) : null;
   const eff =
     settings?.features.effort && task.effort ? (
-      <span className="pill effort">
+      <span className={styles.pill}>
         <IconClock size={10} />
         {task.effort}
       </span>
@@ -68,7 +46,7 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
   // For recurring tasks the due date is an implementation detail of the cycle;
   // it's folded into the recur pill instead of shown separately.
   const due = !task.recur && task.due ? (
-    <span className="pill due">
+    <span className={`${styles.pill} ${styles.due}`}>
       <IconCalendar size={10} />
       {task.due}
     </span>
@@ -81,7 +59,7 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
       !!task.due && task.due < today && task.lastDone !== today;
     const suffix = recurStateSuffix(task.due, task.lastDone);
     return (
-      <span className={`pill recur${isOverdue ? ' recur-overdue' : ''}`}>
+      <span className={`${styles.pill} ${styles.recur}${isOverdue ? ` ${styles.recurOverdue}` : ''}`}>
         <IconRepeat size={10} />
         {task.recur}{suffix}
       </span>
@@ -90,31 +68,40 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
 
   const isDoneToday = !!task.recur && task.lastDone === isoToday();
 
+  const classes = [
+    styles.task,
+    task.done || isDoneToday ? styles.isDone : '',
+    isDragging ? styles.isDragging : '',
+    isPendingRemoval ? styles.isPendingRemoval : '',
+    isFocused ? styles.isFocused : '',
+  ].filter(Boolean).join(' ');
+
   return (
     <div
       ref={ref}
-      className={`task ${task.done || isDoneToday ? 'isDone' : ''} ${isDragging ? 'isDragging' : ''} ${isPendingRemoval ? 'isPendingRemoval' : ''} ${isFocused ? 'isFocused' : ''}`}
+      className={classes}
       data-task-id={task.id}
       style={style}
       {...dragHandleProps}
     >
       <button
-        className="task-check"
+        className={styles.taskCheck}
+        data-task-check
         aria-label="Toggle done"
         onClick={() => void onToggle(task.id)}
       >
         {task.done || isDoneToday ? <IconCheck size={12} /> : null}
       </button>
-      <div className="task-content">
-        <div className="task-title">{task.title}</div>
-        <div className="task-meta">
+      <div className={styles.taskContent}>
+        <div className={styles.taskTitle}>{task.title}</div>
+        <div className={styles.taskMeta}>
           {pri}
           {eff}
           {due}
           {recur}
         </div>
       </div>
-      <div className="task-actions">
+      <div className={styles.taskActions}>
         <button className="btn btn-ghost btn-small" onClick={() => onEdit(task.id)}>
           <IconEdit size={14} />
         </button>

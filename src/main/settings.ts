@@ -23,6 +23,7 @@ export type ZuriSettings = {
     accelerator: string;
   };
   theme: ThemeId;
+  layout: 'apple' | 'standard';
   notificationTime: string; // HH:MM
   devMode: boolean;
   windowBounds?: { x: number; y: number; width: number; height: number };
@@ -39,6 +40,11 @@ const platformDefaultTheme = (): ThemeId => {
   return isDark ? 'open-dark' : 'open-light';
 };
 
+const defaultLayout = (): 'apple' | 'standard' => {
+  const theme = platformDefaultTheme();
+  return theme.startsWith('apple-') ? 'apple' : 'standard';
+};
+
 export const defaultSettings = (): ZuriSettings => ({
   markdownPath: null,
   features: {
@@ -52,6 +58,7 @@ export const defaultSettings = (): ZuriSettings => ({
     accelerator: 'CmdOrCtrl+Shift+Space',
   },
   theme: platformDefaultTheme(),
+  layout: defaultLayout(),
   notificationTime: '00:00',
   devMode: false,
 });
@@ -59,10 +66,14 @@ export const defaultSettings = (): ZuriSettings => ({
 export const loadSettings = async (): Promise<ZuriSettings> => {
   try {
     const raw = await fs.readFile(SETTINGS_PATH(), 'utf8');
-    const parsed = JSON.parse(raw) as Partial<ZuriSettings>;
+    const parsed = JSON.parse(raw) as Partial<ZuriSettings> & { theme?: ThemeId };
+    // Migrate: if no layout saved, derive from saved theme family
+    const migratedLayout: 'apple' | 'standard' =
+      parsed.layout ?? (parsed.theme?.startsWith('apple-') ? 'apple' : 'standard');
     return {
       ...defaultSettings(),
       ...parsed,
+      layout: migratedLayout,
       features: {
         ...defaultSettings().features,
         ...(parsed.features ?? {}),

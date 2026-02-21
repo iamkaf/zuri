@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { IconClose, IconCode } from '../Icons';
 import type { RecurPattern, Task, ZuriSettings } from '../preload';
 import type { EditingState } from '../types';
+import styles from './EditTaskModal.module.css';
 
 const taskToRaw = (task: Task): string => {
   const lines: string[] = [];
@@ -98,11 +99,11 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
   return (
     <div className="modal" aria-hidden="false">
       <div className="backdrop" onClick={onClose}></div>
-      <div className="sheet" role="dialog" aria-modal="true">
-        <div className="sheet-head">
+      <div className={styles.sheet} role="dialog" aria-modal="true">
+        <div className={styles.sheetHead}>
           <div>
-            <div className="sheet-title">Edit task</div>
-            <div className="sheet-subtitle">{editing.section}</div>
+            <div className={styles.sheetTitle}>Edit task</div>
+            <div className={styles.sheetSubtitle}>{editing.section}</div>
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
             {settings.devMode && (
@@ -120,12 +121,12 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
           </div>
         </div>
 
-        <div className="sheet-body">
+        <div className={styles.sheetBody}>
           {showRaw ? (
-            <pre className="task-raw">{taskToRaw(editing.task)}</pre>
+            <pre className={styles.taskRaw}>{taskToRaw(editing.task)}</pre>
           ) : null}
           <div style={showRaw ? { display: 'none' } : undefined}>
-          <label className="sheet-field">
+          <label className={styles.sheetField}>
             <span>Title</span>
             <input
               className="input"
@@ -134,8 +135,8 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
             />
           </label>
 
-          <div className="sheet-grid">
-            <label className={`sheet-field ${canPriority ? '' : 'isDisabled'}`}>
+          <div className={styles.sheetGrid}>
+            <label className={`${styles.sheetField}${canPriority ? '' : ` ${styles.isDisabled}`}`}>
               <span>Priority</span>
               <select
                 className="input"
@@ -151,7 +152,7 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
               </select>
             </label>
 
-            <label className={`sheet-field ${canEffort ? '' : 'isDisabled'}`}>
+            <label className={`${styles.sheetField}${canEffort ? '' : ` ${styles.isDisabled}`}`}>
               <span>Effort</span>
               <select
                 className="input"
@@ -169,7 +170,7 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
             </label>
           </div>
 
-          <label className="sheet-field">
+          <label className={styles.sheetField}>
             <span>Due date</span>
             <div style={{ display: 'flex', gap: 8 }}>
               <input
@@ -187,7 +188,7 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
             </div>
           </label>
 
-          <label className={`sheet-field ${canRecurring ? '' : 'isDisabled'}`}>
+          <label className={`${styles.sheetField}${canRecurring ? '' : ` ${styles.isDisabled}`}`}>
             <span>Repeat</span>
             <div style={{ display: 'flex', gap: 8 }}>
               <select
@@ -220,7 +221,7 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
             </div>
           </label>
 
-          <div className="sheet-actions">
+          <div className={styles.sheetActions}>
             <button className="btn btn-ghost" onClick={onClose}>
               Cancel
             </button>

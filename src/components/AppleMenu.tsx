@@ -7,7 +7,8 @@ import {
 } from '../Icons';
 import type { ThemeId } from '../preload';
 import type { Page } from '../types';
-import { getThemeFamily } from '../theme';
+import { getThemeFamily } from '../lib/theme';
+import styles from './AppleMenu.module.css';
 
 export type AppleMenuProps = {
   menuOpen: boolean;
@@ -43,38 +44,38 @@ export function AppleMenu({
   };
 
   return (
-    <div ref={menuRef} className={`apple-menu ${menuClosing ? 'isClosing' : ''}`}>
+    <div ref={menuRef} className={`${styles.appleMenu}${menuClosing ? ` ${styles.isClosing}` : ''}`}>
       <button
-        className={`apple-menu-item ${page === 'tasks' ? 'isActive' : ''}`}
+        className={`${styles.appleMenuItem}${page === 'tasks' ? ` ${styles.isActive}` : ''}`}
         onClick={() => handlePage('tasks')}
       >
         <IconTask size={16} />
         <span>Tasks</span>
       </button>
       <button
-        className={`apple-menu-item ${page === 'settings' ? 'isActive' : ''}`}
+        className={`${styles.appleMenuItem}${page === 'settings' ? ` ${styles.isActive}` : ''}`}
         onClick={() => handlePage('settings')}
       >
         <IconSettings size={16} />
         <span>Settings</span>
       </button>
-      <div className="apple-menu-divider" />
+      <div className={styles.appleMenuDivider} />
       <button
-        className={`apple-menu-item ${getThemeFamily(theme) === 'apple' ? 'isActive' : ''}`}
+        className={`${styles.appleMenuItem}${getThemeFamily(theme) === 'apple' ? ` ${styles.isActive}` : ''}`}
         onClick={() => handleTheme('apple')}
       >
         <IconApple size={16} />
         <span>Apple Theme</span>
       </button>
       <button
-        className={`apple-menu-item ${getThemeFamily(theme) === 'windows' ? 'isActive' : ''}`}
+        className={`${styles.appleMenuItem}${getThemeFamily(theme) === 'windows' ? ` ${styles.isActive}` : ''}`}
         onClick={() => handleTheme('windows')}
       >
         <IconWindows size={16} />
         <span>Windows Theme</span>
       </button>
       <button
-        className={`apple-menu-item ${getThemeFamily(theme) === 'open' ? 'isActive' : ''}`}
+        className={`${styles.appleMenuItem}${getThemeFamily(theme) === 'open' ? ` ${styles.isActive}` : ''}`}
         onClick={() => handleTheme('open')}
       >
         <IconSparkle size={16} />
