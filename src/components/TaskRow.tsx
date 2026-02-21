@@ -15,16 +15,23 @@ const isoToday = () => {
   const d = new Date();
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 };
-const isoYesterday = () => {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-};
-const fmtLastDone = (dateStr: string): string => {
-  if (dateStr === isoToday()) return 'done today';
-  if (dateStr === isoYesterday()) return 'done yesterday';
-  const d = new Date(dateStr + 'T00:00:00');
-  return `done ${d.toLocaleDateString('en', { month: 'short', day: 'numeric' })}`;
+
+// Returns the status suffix shown inside the recur pill, e.g. "· done today" or "· Feb 21"
+const recurStateSuffix = (due: string | undefined, lastDone: string | undefined): string => {
+  const today = isoToday();
+  if (lastDone === today) return ' · done today';
+  if (due) {
+    const diffMs = new Date(due + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime();
+    const diffDays = Math.round(diffMs / 86_400_000);
+    if (diffDays < 0) return ` · ${Math.abs(diffDays)}d overdue`;
+    if (diffDays === 0) return ' · due today';
+    if (diffDays === 1) return ' · tomorrow';
+    return ` · ${new Date(due + 'T00:00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' })}`;
+  }
+  if (lastDone) {
+    return ` · done ${new Date(lastDone + 'T00:00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' })}`;
+  }
+  return '';
 };
 import type { Task, ZuriSettings } from '../preload';
 
@@ -58,26 +65,28 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
         {task.effort}
       </span>
     ) : null;
-  const due = task.due ? (
+  // For recurring tasks the due date is an implementation detail of the cycle;
+  // it's folded into the recur pill instead of shown separately.
+  const due = !task.recur && task.due ? (
     <span className="pill due">
       <IconCalendar size={10} />
       {task.due}
     </span>
   ) : null;
-  const recur =
-    settings?.features.recurring && task.recur ? (
-      <span className="pill recur">
+
+  const recur = (() => {
+    if (!settings?.features.recurring || !task.recur) return null;
+    const today = isoToday();
+    const isOverdue =
+      !!task.due && task.due < today && task.lastDone !== today;
+    const suffix = recurStateSuffix(task.due, task.lastDone);
+    return (
+      <span className={`pill recur${isOverdue ? ' recur-overdue' : ''}`}>
         <IconRepeat size={10} />
-        {task.recur}
+        {task.recur}{suffix}
       </span>
-    ) : null;
-  const lastDone =
-    settings?.features.recurring && task.recur && task.lastDone ? (
-      <span className={`pill lastDone ${task.lastDone === isoToday() ? 'lastDone-today' : ''}`}>
-        <IconCheck size={10} />
-        {fmtLastDone(task.lastDone)}
-      </span>
-    ) : null;
+    );
+  })();
 
   return (
     <div
@@ -101,7 +110,6 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
           {eff}
           {due}
           {recur}
-          {lastDone}
         </div>
       </div>
       <div className="task-actions">

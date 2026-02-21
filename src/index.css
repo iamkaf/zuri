@@ -479,15 +479,9 @@ body {
   color: var(--success);
 }
 
-.pill.lastDone {
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-}
-
-.pill.lastDone-today {
-  background: color-mix(in srgb, var(--success) 12%, transparent);
-  color: var(--success);
-  font-weight: 600;
+.pill.recur-overdue {
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+  color: var(--warning);
 }
 
 .task-actions {
