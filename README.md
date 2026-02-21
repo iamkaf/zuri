@@ -25,19 +25,6 @@ Zuri reads and writes one markdown file that you control. That is the core idea.
 - Local desktop notifications for due tasks
 - Theme families: Apple, Windows, Open
 
-## Quick start
-
-You need Node.js 20+.
-
-```bash
-git clone https://github.com/iamkaf/zuri.git
-cd zuri
-npm install
-npm start
-```
-
-On first launch, choose a markdown file. If it does not exist yet, Zuri creates it.
-
 ## Install (Linux)
 
 ```bash
@@ -49,6 +36,19 @@ You can pin a version:
 ```bash
 curl -fsSL https://zuri.kaf.sh/install.sh | ZURI_VERSION=v0.1.0 bash
 ```
+
+## Development setup
+
+You need Node.js 20+.
+
+```bash
+git clone https://github.com/iamkaf/zuri.git
+cd zuri
+npm install
+npm start
+```
+
+On first launch, choose a markdown file. If it does not exist yet, Zuri creates it.
 
 ## Task file format
 
