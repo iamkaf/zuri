@@ -15,8 +15,10 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
+            make_command: npx electron-forge make --targets @electron-forge/maker-deb,@electron-forge/maker-rpm
           - os: windows-latest
             platform: win32
+            make_command: npx electron-forge make --targets @electron-forge/maker-squirrel
 
     runs-on: ${{ matrix.os }}
 
@@ -34,7 +36,8 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run make
+      - name: Build distributables
+        run: ${{ matrix.make_command }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
