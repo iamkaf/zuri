@@ -1,33 +1,33 @@
 # Zuri
 
-A task manager that lives in your system tray.
+[![Release](https://img.shields.io/github/v/release/iamkaf/zuri?display_name=tag)](https://github.com/iamkaf/zuri/releases)
+[![Build and Release](https://github.com/iamkaf/zuri/actions/workflows/release.yml/badge.svg)](https://github.com/iamkaf/zuri/actions/workflows/release.yml)
+[![License](https://img.shields.io/github/license/iamkaf/zuri)](LICENSE)
 
-Click the tray icon, add some tasks, click away. That's it.
+A small task app that lives in your system tray.
 
-## Why another task app?
+Open it, add a task, close it, move on.
 
-Most todo apps want to be your "second brain" or "productivity command center." Zuri is not that. It's just a simple markdown file with a nice UI on top.
+## Why this exists
 
-Your tasks live in a `.md` file you control. Sync it with iCloud, Dropbox, Git, or nothing at all. Zuri just reads and writes the file.
+Most task apps try to be a whole productivity system. Zuri does not.
 
-## What it looks like
-
-On macOS, Zuri uses the native "Liquid Glass" vibrancy effect - the window blurs whatever's behind it. On Windows 11, it uses Mica. The idea is that it should feel like it belongs on your system, not like a website pretending to be an app.
-
-There are three themes: Apple (for Mac users who want that native feel), Windows (Fluent Design), and Open (a neutral option that works anywhere).
+Zuri reads and writes one markdown file that you control. That is the core idea.
 
 ## Features
 
-- **Tray-based**: Lives in your menu bar / system tray. One click to open, click away to close.
-- **Markdown storage**: All tasks in one `.md` file. You can edit it directly if you want.
-- **Drag to reorder**: Grab a task and move it.
-- **Priorities and due dates**: Optional. Turn them on in settings if you need them.
-- **Recurring tasks**: Mark a task as daily, weekly, monthly, or every N days. Checking it off advances the due date instead of removing it.
-- **Undo window**: On the Apple theme, completed tasks stick around for 1.5 seconds so you can undo an accidental click.
+- Tray app behavior: click to open, click away to hide
+- Markdown-backed tasks in a single `.md` file
+- Drag and drop reorder
+- Optional priority, effort, and due date fields
+- Recurring tasks (`daily`, `weekdays`, `weekly`, `monthly`, `every N days`)
+- Global shortcut support
+- Local desktop notifications for due tasks
+- Theme families: Apple, Windows, Open
 
-## Getting started
+## Quick start
 
-You'll need Node.js 18 or newer.
+You need Node.js 20+.
 
 ```bash
 git clone https://github.com/iamkaf/zuri.git
@@ -36,11 +36,9 @@ npm install
 npm start
 ```
 
-On first launch, pick a markdown file to store your tasks. If you don't have one, Zuri will create it.
+On first launch, choose a markdown file. If it does not exist yet, Zuri creates it.
 
-## The file format
-
-Tasks are stored as plain markdown:
+## Task file format
 
 ```markdown
 # Tasks
@@ -49,7 +47,7 @@ Tasks are stored as plain markdown:
 
 - [ ] Buy groceries
   - priority: P1
-  - due: 2024-01-15
+  - due: 2026-03-01
 - [x] Call mom
 
 ## Work
@@ -63,31 +61,42 @@ Tasks are stored as plain markdown:
 - [ ] Weekly review
   - recur: weekly
   - due: 2026-02-24
-- [ ] Pay rent
-  - recur: monthly
-  - due: 2026-03-01
 ```
 
-Supported recurrence values: `daily`, `weekdays`, `weekly`, `monthly`, `every N days` (e.g. `every 3 days`).
+You can edit this file in any text editor. Zuri will reload after save.
 
-When you check off a recurring task, its due date advances to the next occurrence and it stays open.
-
-You can edit this file in any text editor. Zuri will reload when you save.
-
-## Building
+## Build locally
 
 ```bash
-npm run package   # Creates an app bundle
-npm run make      # Creates a distributable (.dmg, .exe, etc.)
+npm run package
+npm run make
 ```
 
-## Configuration
+`npm run make` builds distributables for the current OS.
 
-Settings are stored in `~/.zuri/settings.json`. You can edit it directly or use the in-app settings panel.
+- Linux: `.deb`, `.rpm`
+- Windows: Squirrel installer package
+- macOS: local build on a Mac (community/self-build), not an official CI release artifact yet
 
-## Tech
+## Releases
 
-Built with Electron, React, and TypeScript. Uses @dnd-kit for drag and drop. The native blur effects come from Electron's vibrancy (macOS) and background material (Windows) APIs.
+Official GitHub release artifacts are built by CI for Linux and Windows when a `v*` tag is pushed.
+
+To tag and push from `package.json` version:
+
+```bash
+npm run release:tag
+```
+
+## Config
+
+Settings file location:
+
+- `~/.zuri/settings.json`
+
+## Stack
+
+Electron, React, TypeScript, and `@dnd-kit`.
 
 ## License
 
