@@ -11,6 +11,18 @@ if (-not $IsWindows) {
   throw "This installer currently supports Windows only."
 }
 
+if (-not $Version -and $env:ZURI_VERSION) {
+  $Version = $env:ZURI_VERSION
+}
+
+if ($env:ZURI_REPO) {
+  $Repo = $env:ZURI_REPO
+}
+
+if (-not $Silent -and $env:ZURI_SILENT -match '^(1|true|yes)$') {
+  $Silent = $true
+}
+
 $apiBase = "https://api.github.com/repos/$Repo/releases"
 $releaseUrl = if ($Version) {
   $tag = if ($Version.StartsWith("v")) { $Version } else { "v$Version" }

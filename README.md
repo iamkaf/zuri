@@ -42,13 +42,13 @@ curl -fsSL https://zuri.kaf.sh/install.sh | ZURI_VERSION=v0.1.0 bash
 Run in PowerShell:
 
 ```powershell
-& ([scriptblock]::Create((irm https://zuri.kaf.sh/install.ps1)))
+irm https://zuri.kaf.sh/install.ps1 | iex
 ```
 
 Pin a version:
 
 ```powershell
-& ([scriptblock]::Create((irm https://zuri.kaf.sh/install.ps1))) -Version v0.1.0
+$env:ZURI_VERSION='v0.1.0'; irm https://zuri.kaf.sh/install.ps1 | iex
 ```
 
 ## Development setup
