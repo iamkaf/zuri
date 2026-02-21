@@ -38,6 +38,18 @@ npm start
 
 On first launch, choose a markdown file. If it does not exist yet, Zuri creates it.
 
+## Install (Linux)
+
+```bash
+curl -fsSL https://zuri.kaf.sh/install.sh | bash
+```
+
+You can pin a version:
+
+```bash
+curl -fsSL https://zuri.kaf.sh/install.sh | ZURI_VERSION=v0.1.0 bash
+```
+
 ## Task file format
 
 ```markdown
