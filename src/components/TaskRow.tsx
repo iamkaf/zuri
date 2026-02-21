@@ -88,10 +88,12 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
     );
   })();
 
+  const isDoneToday = !!task.recur && task.lastDone === isoToday();
+
   return (
     <div
       ref={ref}
-      className={`task ${task.done ? 'isDone' : ''} ${isDragging ? 'isDragging' : ''} ${isPendingRemoval ? 'isPendingRemoval' : ''} ${isFocused ? 'isFocused' : ''}`}
+      className={`task ${task.done || isDoneToday ? 'isDone' : ''} ${isDragging ? 'isDragging' : ''} ${isPendingRemoval ? 'isPendingRemoval' : ''} ${isFocused ? 'isFocused' : ''}`}
       data-task-id={task.id}
       style={style}
       {...dragHandleProps}
@@ -101,7 +103,7 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
         aria-label="Toggle done"
         onClick={() => void onToggle(task.id)}
       >
-        {task.done ? <IconCheck size={12} /> : null}
+        {task.done || isDoneToday ? <IconCheck size={12} /> : null}
       </button>
       <div className="task-content">
         <div className="task-title">{task.title}</div>
