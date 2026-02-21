@@ -4,8 +4,9 @@ import { defineConfig } from 'vite';
 // @vitejs/plugin-react is ESM-only, so we must use dynamic import.
 export default defineConfig(async () => {
   const { default: react } = await import('@vitejs/plugin-react');
+  const { default: tailwindcss } = await import('@tailwindcss/vite');
 
   return {
-    plugins: [react()],
+    plugins: [tailwindcss(), react()],
   };
 });

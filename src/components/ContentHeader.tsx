@@ -1,5 +1,5 @@
+import { cn } from '../lib/cn';
 import type { TaskFilter } from '../types';
-import styles from './ContentHeader.module.css';
 
 export type ContentHeaderProps = {
   title: string;
@@ -10,30 +10,24 @@ export type ContentHeaderProps = {
 
 export function ContentHeader({ title, filter, onSetFilter, right }: ContentHeaderProps) {
   return (
-    <div className={styles.contentHeader}>
-      <div className={styles.contentHeaderTop}>
-        <h1 className={styles.contentTitle}>{title}</h1>
+    <div data-content-header className="flex flex-col gap-[10px] p-3 bg-bg border-b border-edge">
+      <div className="flex items-center justify-between">
+        <h1 data-content-title className="text-[18px] font-semibold">{title}</h1>
         {right}
       </div>
-      <div className={styles.filters}>
-        <button
-          className={`${styles.filterBtn}${filter === 'open' ? ` ${styles.isActive}` : ''}`}
-          onClick={() => onSetFilter('open')}
-        >
-          Open
-        </button>
-        <button
-          className={`${styles.filterBtn}${filter === 'all' ? ` ${styles.isActive}` : ''}`}
-          onClick={() => onSetFilter('all')}
-        >
-          All
-        </button>
-        <button
-          className={`${styles.filterBtn}${filter === 'done' ? ` ${styles.isActive}` : ''}`}
-          onClick={() => onSetFilter('done')}
-        >
-          Done
-        </button>
+      <div className="flex gap-0.5 p-0.5 bg-overlay rounded">
+        {(['open', 'all', 'done'] as const).map((f) => (
+          <button
+            key={f}
+            className={cn(
+              'h-[26px] px-[10px] border-none bg-transparent text-muted rounded text-xs font-medium cursor-pointer transition-all hover:text-text',
+              filter === f && 'bg-surface text-text shadow-xs',
+            )}
+            onClick={() => onSetFilter(f)}
+          >
+            {f.charAt(0).toUpperCase() + f.slice(1)}
+          </button>
+        ))}
       </div>
     </div>
   );

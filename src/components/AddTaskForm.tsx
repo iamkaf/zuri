@@ -1,6 +1,5 @@
 import { useRef, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { IconPlus } from '../Icons';
-import styles from './AddTaskForm.module.css';
 
 export type AddTaskFormHandle = {
   focus: () => void;
@@ -37,7 +36,7 @@ export const AddTaskForm = forwardRef<AddTaskFormHandle, AddTaskFormProps>(
     };
 
     return (
-      <form className={styles.addTask} onSubmit={handleSubmit}>
+      <form className="flex gap-2 px-3 pb-3" onSubmit={handleSubmit}>
         <input
           ref={inputRef}
           className="input"

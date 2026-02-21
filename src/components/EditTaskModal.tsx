@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { IconClose, IconCode } from '../Icons';
 import type { RecurPattern, Task, ZuriSettings } from '../preload';
 import type { EditingState } from '../types';
-import styles from './EditTaskModal.module.css';
+import { cn } from '../lib/cn';
 
 const taskToRaw = (task: Task): string => {
   const lines: string[] = [];
@@ -99,16 +99,21 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
   return (
     <div className="modal" aria-hidden="false">
       <div className="backdrop" onClick={onClose}></div>
-      <div className={styles.sheet} role="dialog" aria-modal="true">
-        <div className={styles.sheetHead}>
+      <div
+        data-modal-sheet
+        role="dialog"
+        aria-modal="true"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-24px)] max-w-[380px] bg-surface border border-edge rounded-[var(--radius)] shadow-[0_20px_40px_rgba(0,0,0,0.3)] overflow-hidden"
+      >
+        <div data-sheet-head className="flex items-center justify-between px-3 py-[10px] border-b border-edge">
           <div>
-            <div className={styles.sheetTitle}>Edit task</div>
-            <div className={styles.sheetSubtitle}>{editing.section}</div>
+            <div className="text-sm font-semibold">Edit task</div>
+            <div className="text-[11px] text-muted mt-px">{editing.section}</div>
           </div>
-          <div style={{ display: 'flex', gap: 4 }}>
+          <div className="flex gap-1">
             {settings.devMode && (
               <button
-                className={`btn btn-ghost btn-small${showRaw ? ' isActive' : ''}`}
+                className={cn('btn btn-ghost btn-small', showRaw && 'text-accent')}
                 onClick={() => setShowRaw((v) => !v)}
                 title="Raw markdown"
               >
@@ -121,13 +126,13 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
           </div>
         </div>
 
-        <div className={styles.sheetBody}>
+        <div className="p-3 flex flex-col gap-[10px]">
           {showRaw ? (
-            <pre className={styles.taskRaw}>{taskToRaw(editing.task)}</pre>
+            <pre className="font-mono text-[11px] leading-relaxed bg-overlay text-text border border-edge rounded-[6px] px-3.5 py-3 m-0 whitespace-pre overflow-x-auto">{taskToRaw(editing.task)}</pre>
           ) : null}
           <div style={showRaw ? { display: 'none' } : undefined}>
-          <label className={styles.sheetField}>
-            <span>Title</span>
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] text-muted font-medium">Title</span>
             <input
               className="input"
               value={title}
@@ -135,9 +140,9 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
             />
           </label>
 
-          <div className={styles.sheetGrid}>
-            <label className={`${styles.sheetField}${canPriority ? '' : ` ${styles.isDisabled}`}`}>
-              <span>Priority</span>
+          <div className="grid grid-cols-2 gap-[10px]">
+            <label className={cn('flex flex-col gap-1', !canPriority && 'opacity-50 pointer-events-none')}>
+              <span className="text-[11px] text-muted font-medium">Priority</span>
               <select
                 className="input"
                 disabled={!canPriority}
@@ -152,8 +157,8 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
               </select>
             </label>
 
-            <label className={`${styles.sheetField}${canEffort ? '' : ` ${styles.isDisabled}`}`}>
-              <span>Effort</span>
+            <label className={cn('flex flex-col gap-1', !canEffort && 'opacity-50 pointer-events-none')}>
+              <span className="text-[11px] text-muted font-medium">Effort</span>
               <select
                 className="input"
                 disabled={!canEffort}
@@ -170,15 +175,14 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
             </label>
           </div>
 
-          <label className={styles.sheetField}>
-            <span>Due date</span>
-            <div style={{ display: 'flex', gap: 8 }}>
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] text-muted font-medium">Due date</span>
+            <div className="flex gap-2">
               <input
-                className="input"
+                className="input flex-1"
                 type="date"
                 value={due}
                 onChange={(e) => setDue(e.target.value)}
-                style={{ flex: 1 }}
               />
               {due && (
                 <button className="btn btn-ghost" type="button" onClick={() => setDue('')}>
@@ -188,15 +192,14 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
             </div>
           </label>
 
-          <label className={`${styles.sheetField}${canRecurring ? '' : ` ${styles.isDisabled}`}`}>
-            <span>Repeat</span>
-            <div style={{ display: 'flex', gap: 8 }}>
+          <label className={cn('flex flex-col gap-1', !canRecurring && 'opacity-50 pointer-events-none')}>
+            <span className="text-[11px] text-muted font-medium">Repeat</span>
+            <div className="flex gap-2">
               <select
-                className="input"
+                className="input flex-1"
                 disabled={!canRecurring}
                 value={recurSelect}
                 onChange={(e) => setRecurSelect(e.target.value)}
-                style={{ flex: 1 }}
               >
                 <option value="">None</option>
                 <option value="daily">Daily</option>
@@ -221,14 +224,11 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
             </div>
           </label>
 
-          <div className={styles.sheetActions}>
+          <div className="flex justify-end gap-2 pt-2">
             <button className="btn btn-ghost" onClick={onClose}>
               Cancel
             </button>
-            <button
-              className="btn btn-primary"
-              onClick={handleSave}
-            >
+            <button className="btn btn-primary" onClick={handleSave}>
               Save
             </button>
           </div>

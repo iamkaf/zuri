@@ -8,6 +8,7 @@ import {
   IconFile,
 } from '../Icons';
 import type { LayoutProps } from '../types';
+import { cn } from '../lib/cn';
 import { getThemeFamily } from '../lib/theme';
 import { filteredTasks } from '../lib/tasks';
 import { ContentHeader } from './ContentHeader';
@@ -15,7 +16,24 @@ import { TaskList } from './TaskList';
 import { AddTaskForm } from './AddTaskForm';
 import { SettingsForm } from './SettingsForm';
 import { EditTaskModal } from './EditTaskModal';
-import styles from './StandardLayout.module.css';
+
+const navItemClass = (active: boolean) => cn(
+  'relative flex items-center justify-center w-full h-10',
+  'border-none bg-transparent cursor-pointer transition-all',
+  '[&>svg]:w-5 [&>svg]:h-5',
+  active ? 'text-accent' : 'text-muted hover:text-text',
+);
+
+const themeItemClass = (active: boolean) => cn(
+  'relative flex items-center justify-center w-full h-9',
+  'border-none bg-transparent cursor-pointer transition-all',
+  '[&>svg]:w-[18px] [&>svg]:h-[18px]',
+  active ? 'text-accent' : 'text-muted hover:text-text',
+);
+
+const ActiveIndicator = () => (
+  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-accent rounded-r-sm" />
+);
 
 export function StandardLayout({
   app,
@@ -34,43 +52,48 @@ export function StandardLayout({
   onSaveTask,
 }: LayoutProps) {
   const sidebar = (
-    <aside className={styles.sidebar}>
-      <nav className={styles.sidebarNav}>
+    <aside className="flex flex-col h-full bg-bg border-r border-edge">
+      <nav className="flex-1 flex flex-col pt-3">
         <button
-          className={`${styles.sidebarItem}${app.page === 'tasks' ? ` ${styles.isActive}` : ''}`}
+          className={navItemClass(app.page === 'tasks')}
           onClick={() => onSetPage('tasks')}
           title="Tasks"
         >
+          {app.page === 'tasks' && <ActiveIndicator />}
           <IconTask />
         </button>
         <button
-          className={`${styles.sidebarItem}${app.page === 'settings' ? ` ${styles.isActive}` : ''}`}
+          className={navItemClass(app.page === 'settings')}
           onClick={() => onSetPage('settings')}
           title="Settings"
         >
+          {app.page === 'settings' && <ActiveIndicator />}
           <IconSettings />
         </button>
       </nav>
-      <div className={styles.sidebarThemes}>
+      <div className="flex flex-col pb-2 border-t border-edge pt-2">
         <button
-          className={`${styles.sidebarItem}${getThemeFamily(theme) === 'apple' ? ` ${styles.isActive}` : ''}`}
+          className={themeItemClass(getThemeFamily(theme) === 'apple')}
           onClick={() => void onSetThemeFamily('apple')}
           title="Apple Theme"
         >
+          {getThemeFamily(theme) === 'apple' && <ActiveIndicator />}
           <IconApple />
         </button>
         <button
-          className={`${styles.sidebarItem}${getThemeFamily(theme) === 'windows' ? ` ${styles.isActive}` : ''}`}
+          className={themeItemClass(getThemeFamily(theme) === 'windows')}
           onClick={() => void onSetThemeFamily('windows')}
           title="Windows Theme"
         >
+          {getThemeFamily(theme) === 'windows' && <ActiveIndicator />}
           <IconWindows />
         </button>
         <button
-          className={`${styles.sidebarItem}${getThemeFamily(theme) === 'open' ? ` ${styles.isActive}` : ''}`}
+          className={themeItemClass(getThemeFamily(theme) === 'open')}
           onClick={() => void onSetThemeFamily('open')}
           title="Open Theme"
         >
+          {getThemeFamily(theme) === 'open' && <ActiveIndicator />}
           <IconSparkle />
         </button>
       </div>
@@ -79,9 +102,9 @@ export function StandardLayout({
 
   if (!app.settings?.markdownPath && app.page === 'tasks') {
     return (
-      <div className={styles.app}>
+      <div className="h-full grid grid-cols-[48px_1fr] bg-bg">
         {sidebar}
-        <main className={styles.main}>
+        <main className="flex flex-col h-full overflow-hidden bg-bg">
           <div className="empty">
             <div className="empty-card">
               <IconFile size={48} style={{ marginBottom: 16, opacity: 0.5 }} />
@@ -107,10 +130,10 @@ export function StandardLayout({
   );
 
   return (
-    <div className={styles.app}>
+    <div className="h-full grid grid-cols-[48px_1fr] bg-bg">
       {sidebar}
 
-      <main className={styles.main}>
+      <main className="flex flex-col h-full overflow-hidden bg-bg">
         {app.page === 'tasks' ? (
           <>
             <ContentHeader

@@ -7,11 +7,6 @@ import { TaskList } from './TaskList';
 import { SettingsForm } from './SettingsForm';
 import { EditTaskModal } from './EditTaskModal';
 import { AppleMenu } from './AppleMenu';
-import styles from './AppleLayout.module.css';
-import menuStyles from './AppleMenu.module.css';
-import headerStyles from './ContentHeader.module.css';
-import taskListStyles from './TaskList.module.css';
-import taskRowStyles from './TaskRow.module.css';
 
 export function AppleLayout({
   app,
@@ -133,7 +128,7 @@ export function AppleLayout({
   };
 
   const ellipsisMenu = (
-    <div className={menuStyles.appleMenuTrigger}>
+    <div className="relative">
       <button className="btn btn-ghost btn-small" onClick={() => setMenuOpen(true)}>
         <IconEllipsis size={16} />
       </button>
@@ -154,8 +149,8 @@ export function AppleLayout({
 
   if (!app.settings?.markdownPath) {
     return (
-      <div className={styles.appleApp}>
-        <main className={styles.appleMain}>
+      <div data-apple-app className="h-full flex flex-col bg-bg">
+        <main className="flex-1 flex flex-col overflow-hidden">
           <div className="empty">
             <div className="empty-card">
               <IconFile size={48} style={{ marginBottom: 16, opacity: 0.5 }} />
@@ -172,8 +167,8 @@ export function AppleLayout({
   }
 
   return (
-    <div className={styles.appleApp}>
-      <main className={styles.appleMain}>
+    <div data-apple-app className="h-full flex flex-col bg-bg">
+      <main className="flex-1 flex flex-col overflow-hidden">
         {app.page === 'tasks' ? (
           <>
             <ContentHeader
@@ -194,11 +189,14 @@ export function AppleLayout({
               sectionName={app.section}
             />
             {app.showAddInput && (
-              <div className={taskListStyles.taskList}>
-                <div className={styles.appleAddTask}>
-                  <div className={`${taskRowStyles.taskCheck} ${styles.appleAddTaskCheck}`} />
+              <div data-task-list className="flex-1 overflow-y-auto p-2">
+                <div className="grid grid-cols-[auto_1fr] gap-[10px] items-center py-[10px] px-3 mb-1.5 bg-surface border border-edge rounded-[8px] shadow-[var(--inner-highlight,none),0_1px_2px_rgba(0,0,0,0.05)] animate-[appleAddTaskEnter_200ms_ease-out]">
+                  <div
+                    data-task-check
+                    className="w-[18px] h-[18px] border-[1.5px] border-edge-strong rounded-sm bg-transparent grid place-items-center shrink-0 opacity-40"
+                  />
                   <input
-                    className={styles.appleAddTaskInput}
+                    className="bg-transparent border-none text-text text-[13px] font-medium outline-none w-full p-0 placeholder:text-subtle placeholder:font-normal"
                     placeholder="Add a task..."
                     autoComplete="off"
                     value={addTitle}
@@ -226,9 +224,9 @@ export function AppleLayout({
           </>
         ) : (
           <>
-            <div className={headerStyles.contentHeader}>
-              <div className={headerStyles.contentHeaderTop}>
-                <h1 className={headerStyles.contentTitle}>Settings</h1>
+            <div data-content-header className="flex flex-col gap-[10px] p-3 bg-bg border-b border-edge">
+              <div className="flex items-center justify-between">
+                <h1 data-content-title className="text-[18px] font-semibold">Settings</h1>
                 {ellipsisMenu}
               </div>
             </div>
@@ -245,7 +243,7 @@ export function AppleLayout({
 
       {app.page === 'tasks' && (
         <button
-          className={styles.appleFab}
+          className="absolute bottom-4 right-4 z-40 w-12 h-12 p-0 border-none rounded-full bg-accent text-white shadow-[0_4px_12px_rgba(0,0,0,0.2),inset_0_0.5px_0_rgba(255,255,255,0.2)] cursor-pointer flex items-center justify-center transition-all hover:scale-105 active:scale-95"
           onClick={() => setApp((prev) => ({ ...prev, showAddInput: !prev.showAddInput }))}
           aria-label="Add task"
         >

@@ -16,7 +16,6 @@ import { useEffect } from 'react';
 import { IconCheck, IconFolder } from '../Icons';
 import type { Section, Task, ZuriSettings } from '../preload';
 import { SortableTaskRow } from './TaskRow';
-import styles from './TaskList.module.css';
 
 export type TaskListProps = {
   tasks: Task[];
@@ -66,7 +65,7 @@ export function TaskList({
 
   if (section == null) {
     return (
-      <div className={styles.taskList}>
+      <div data-task-list className="flex-1 overflow-y-auto p-2">
         <div className="hint">
           <IconFolder size={24} style={{ marginBottom: 8, opacity: 0.5 }} />
           <div>Create your first section to get started.</div>
@@ -77,7 +76,7 @@ export function TaskList({
 
   if (tasks.length === 0) {
     return (
-      <div className={styles.taskList}>
+      <div data-task-list className="flex-1 overflow-y-auto p-2">
         <div className="empty">
           <IconCheck className="empty-icon" size={48} />
           <div className="empty-title">All caught up!</div>
@@ -88,7 +87,7 @@ export function TaskList({
   }
 
   return (
-    <div className={styles.taskList}>
+    <div data-task-list className="flex-1 overflow-y-auto p-2">
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (
