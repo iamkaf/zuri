@@ -392,9 +392,14 @@ app.on('ready', async () => {
       const task = sec?.tasks.find((t) => t.id === args.taskId);
       if (!task) return;
       if (task.recur && !task.done) {
-        // Recurring task: record completion date, advance due, keep open
-        task.lastDone = todayISO();
-        task.due = nextDue(task.recur, task.due);
+        if (task.lastDone === todayISO()) {
+          // Already done today — undo the completion
+          task.lastDone = undefined;
+        } else {
+          // Complete: record date and advance due
+          task.lastDone = todayISO();
+          task.due = nextDue(task.recur, task.due);
+        }
       } else {
         task.done = !task.done;
       }
