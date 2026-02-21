@@ -38,6 +38,7 @@ export type Task = {
   effort?: Effort;
   due?: string;
   recur?: RecurPattern;
+  lastDone?: string; // YYYY-MM-DD
   extra: Record<string, string>;
 };
 

@@ -15,7 +15,7 @@ import { loadSettings, patchSettings } from './main/settings';
 import { ensureFile, readDoc, watchMarkdownFile, writeDoc } from './main/tasks';
 import { rescheduleNotifications } from './main/notify';
 import type { DocModel, Task } from './main/markdown';
-import { nextDue } from './main/markdown';
+import { nextDue, todayISO } from './main/markdown';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -392,7 +392,8 @@ app.on('ready', async () => {
       const task = sec?.tasks.find((t) => t.id === args.taskId);
       if (!task) return;
       if (task.recur && !task.done) {
-        // Recurring task: advance due date and keep open
+        // Recurring task: record completion date, advance due, keep open
+        task.lastDone = todayISO();
         task.due = nextDue(task.recur, task.due);
       } else {
         task.done = !task.done;
@@ -418,6 +419,8 @@ app.on('ready', async () => {
           task.due = args.patch.due;
         if (typeof args.patch.recur === 'string' || args.patch.recur === undefined)
           task.recur = args.patch.recur as Task['recur'];
+        if (typeof args.patch.lastDone === 'string' || args.patch.lastDone === undefined)
+          task.lastDone = args.patch.lastDone;
       }),
   );
 

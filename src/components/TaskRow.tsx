@@ -9,6 +9,23 @@ import {
   IconClock,
   IconRepeat,
 } from '../Icons';
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+const isoToday = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+};
+const isoYesterday = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+};
+const fmtLastDone = (dateStr: string): string => {
+  if (dateStr === isoToday()) return 'done today';
+  if (dateStr === isoYesterday()) return 'done yesterday';
+  const d = new Date(dateStr + 'T00:00:00');
+  return `done ${d.toLocaleDateString('en', { month: 'short', day: 'numeric' })}`;
+};
 import type { Task, ZuriSettings } from '../preload';
 
 export type TaskRowProps = {
@@ -54,6 +71,13 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
         {task.recur}
       </span>
     ) : null;
+  const lastDone =
+    settings?.features.recurring && task.recur && task.lastDone ? (
+      <span className={`pill lastDone ${task.lastDone === isoToday() ? 'lastDone-today' : ''}`}>
+        <IconCheck size={10} />
+        {fmtLastDone(task.lastDone)}
+      </span>
+    ) : null;
 
   return (
     <div
@@ -77,6 +101,7 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
           {eff}
           {due}
           {recur}
+          {lastDone}
         </div>
       </div>
       <div className="task-actions">

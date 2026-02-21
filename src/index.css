@@ -479,6 +479,17 @@ body {
   color: var(--success);
 }
 
+.pill.lastDone {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.pill.lastDone-today {
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+  font-weight: 600;
+}
+
 .task-actions {
   display: flex;
   gap: 4px;

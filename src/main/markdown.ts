@@ -10,6 +10,7 @@ export type Task = {
   effort?: Effort;
   due?: string; // YYYY-MM-DD
   recur?: RecurPattern;
+  lastDone?: string; // YYYY-MM-DD, set when a recurring task is completed
   extra: Record<string, string>;
 };
 
@@ -110,6 +111,9 @@ export const parseMarkdown = (md: string): DocModel => {
       } else if (key === 'recur') {
         if (isRecurPattern(value)) currentTask.recur = value;
         else currentTask.extra[meta.key] = value;
+      } else if (key === 'lastdone') {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) currentTask.lastDone = value;
+        else currentTask.extra[meta.key] = value;
       } else {
         currentTask.extra[meta.key] = value;
       }
@@ -138,6 +142,7 @@ export const writeMarkdown = (model: DocModel): string => {
       if (task.effort) out.push(`  - effort: ${task.effort}`);
       if (task.due) out.push(`  - due: ${task.due}`);
       if (task.recur) out.push(`  - recur: ${task.recur}`);
+      if (task.lastDone) out.push(`  - lastDone: ${task.lastDone}`);
       for (const [k, v] of Object.entries(task.extra ?? {})) {
         out.push(`  - ${k}: ${v}`);
       }
@@ -152,6 +157,7 @@ export const writeMarkdown = (model: DocModel): string => {
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const fmtDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+export const todayISO = () => fmtDate(new Date());
 
 export const nextDue = (pattern: RecurPattern, currentDue?: string): string => {
   const base =
