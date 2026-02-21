@@ -1,60 +1,75 @@
 # Building From Source
 
-This guide covers running and building Zuri from source on Linux, Windows, and macOS.
+This guide is for people who want to build Zuri themselves.
 
-## Prerequisites
+If you have never done this before, that is fine. Follow the steps in order and copy/paste the commands.
 
-- Node.js 20+
-- npm 10+
+## 1) Install required tools
+
+You need:
+
+- Node.js 20 or newer (this includes `npm`)
 - Git
 
-## Clone and install
+Check if they are installed:
+
+```bash
+node -v
+npm -v
+git --version
+```
+
+If one of these commands says "not found", install that tool first and come back.
+
+## 2) Download Zuri source code
 
 ```bash
 git clone https://github.com/iamkaf/zuri.git
 cd zuri
+```
+
+## 3) Install project dependencies
+
+```bash
 npm install
 ```
 
-## Run in development
+This may take a few minutes the first time.
+
+## 4) Run Zuri
 
 ```bash
 npm start
 ```
 
-## Quality checks
+Zuri should open after the app finishes starting.
+
+## 5) Build an installable package
+
+If you want install files (instead of just running from source), use:
 
 ```bash
-npm run lint
-npm run typecheck
-npm test
-```
-
-## Build distributables
-
-```bash
-npm run package
 npm run make
 ```
 
-`npm run make` builds for your current OS.
+`npm run make` builds for your current operating system.
 
 ## Platform notes
 
 ### Linux
 
-You may need packaging dependencies before `npm run make`:
-
-- Debian/Ubuntu:
+On Debian/Ubuntu, you may need packaging tools first:
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y dpkg fakeroot rpm
 ```
 
+After building, look in `out/make/` for `.deb` or `.rpm` files.
+
 ### Windows
 
-`npm run make` produces a Squirrel installer (`*.Setup.exe`) and related update artifacts.
+After building, look in `out/make/` for the installer (`*.Setup.exe`).
 
 ### macOS
 
@@ -62,5 +77,10 @@ You can build locally on macOS, but official CI release artifacts are currently 
 
 ## Troubleshooting
 
-- If Electron native modules fail, run `npm rebuild`.
-- If packaging fails, remove `out/` and retry `npm run make`.
+- If `npm install` fails, run `npm cache verify` and retry.
+- If the app does not start, delete `node_modules` and run `npm install` again.
+- If packaging fails, delete `out/` and run `npm run make` again.
+
+## Need help?
+
+Open an issue: <https://github.com/iamkaf/zuri/issues>
