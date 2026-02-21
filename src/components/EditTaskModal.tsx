@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { IconClose } from '../Icons';
-import type { Task, ZuriSettings } from '../preload';
+import type { RecurPattern, Task, ZuriSettings } from '../preload';
 import type { EditingState } from '../types';
 
 export type EditTaskModalProps = {
@@ -15,6 +15,8 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
   const [priority, setPriority] = useState('');
   const [effort, setEffort] = useState('');
   const [due, setDue] = useState('');
+  const [recurSelect, setRecurSelect] = useState('');
+  const [recurDays, setRecurDays] = useState(7);
 
   useEffect(() => {
     if (!editing) return;
@@ -22,6 +24,15 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
     setPriority(editing.task.priority ?? '');
     setEffort(editing.task.effort ?? '');
     setDue(editing.task.due ?? '');
+    const recur = editing.task.recur;
+    if (!recur) {
+      setRecurSelect('');
+    } else if (/^every \d+ days$/.test(recur)) {
+      setRecurSelect('custom');
+      setRecurDays(parseInt(recur.split(' ')[1], 10));
+    } else {
+      setRecurSelect(recur);
+    }
   }, [editing]);
 
   const isPriority = (value: string): value is Task['priority'] =>
@@ -32,14 +43,19 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
 
   const handleSave = useCallback(() => {
     if (!editing) return;
+    const recur: RecurPattern | undefined =
+      recurSelect === '' ? undefined :
+      recurSelect === 'custom' ? `every ${recurDays} days` as RecurPattern :
+      recurSelect as RecurPattern;
     const patch: Partial<Task> = {
       title: title.trim() || editing.task.title,
       priority: isPriority(priority) ? priority : undefined,
       effort: isEffort(effort) ? effort : undefined,
       due: due.trim() === '' ? undefined : due.trim(),
+      recur,
     };
     void onSave(editing.section, editing.task, patch);
-  }, [editing, title, priority, effort, due, onSave]);
+  }, [editing, title, priority, effort, due, recurSelect, recurDays, onSave]);
 
   useEffect(() => {
     if (!editing) return;
@@ -62,6 +78,7 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
 
   const canPriority = settings.features.priority;
   const canEffort = settings.features.effort;
+  const canRecurring = settings.features.recurring;
 
   return (
     <div className="modal" aria-hidden="false">
@@ -130,6 +147,39 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
               value={due}
               onChange={(e) => setDue(e.target.value)}
             />
+          </label>
+
+          <label className={`sheet-field ${canRecurring ? '' : 'isDisabled'}`}>
+            <span>Repeat</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <select
+                className="input"
+                disabled={!canRecurring}
+                value={recurSelect}
+                onChange={(e) => setRecurSelect(e.target.value)}
+                style={{ flex: 1 }}
+              >
+                <option value="">None</option>
+                <option value="daily">Daily</option>
+                <option value="weekdays">Weekdays (Mon–Fri)</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="custom">Every N days…</option>
+              </select>
+              {recurSelect === 'custom' && (
+                <input
+                  className="input"
+                  type="number"
+                  min={2}
+                  max={365}
+                  value={recurDays}
+                  onChange={(e) =>
+                    setRecurDays(Math.max(2, parseInt(e.target.value, 10) || 2))
+                  }
+                  style={{ width: 64 }}
+                />
+              )}
+            </div>
           </label>
 
           <div className="sheet-actions">

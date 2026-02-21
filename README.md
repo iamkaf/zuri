@@ -22,6 +22,7 @@ There are three themes: Apple (for Mac users who want that native feel), Windows
 - **Markdown storage**: All tasks in one `.md` file. You can edit it directly if you want.
 - **Drag to reorder**: Grab a task and move it.
 - **Priorities and due dates**: Optional. Turn them on in settings if you need them.
+- **Recurring tasks**: Mark a task as daily, weekly, monthly, or every N days. Checking it off advances the due date instead of removing it.
 - **Undo window**: On the Apple theme, completed tasks stick around for 1.5 seconds so you can undo an accidental click.
 
 ## Getting started
@@ -52,7 +53,21 @@ Tasks are stored as plain markdown:
 
 ## Work
 - [ ] Review PR
+
+## Habits
+- [ ] Take vitamins
+  - recur: daily
+- [ ] Weekly review
+  - recur: weekly
+  - due: 2026-02-24
+- [ ] Pay rent
+  - recur: monthly
+  - due: 2026-03-01
 ```
+
+Supported recurrence values: `daily`, `weekdays`, `weekly`, `monthly`, `every N days` (e.g. `every 3 days`).
+
+When you check off a recurring task, its due date advances to the next occurrence and it stays open.
 
 You can edit this file in any text editor. Zuri will reload when you save.
 

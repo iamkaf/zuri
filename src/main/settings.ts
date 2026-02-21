@@ -16,6 +16,7 @@ export type ZuriSettings = {
     priority: boolean;
     effort: boolean;
     notifications: boolean;
+    recurring: boolean;
   };
   globalShortcut: {
     enabled: boolean;
@@ -43,6 +44,7 @@ export const defaultSettings = (): ZuriSettings => ({
     priority: true,
     effort: true,
     notifications: true,
+    recurring: true,
   },
   globalShortcut: {
     enabled: false,

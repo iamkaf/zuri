@@ -69,6 +69,18 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
             }
           />
         </label>
+        <label className="toggle">
+          <span>Recurring tasks</span>
+          <input
+            type="checkbox"
+            checked={settings.features.recurring}
+            onChange={(e) =>
+              void onPatchSettings({
+                features: { ...settings.features, recurring: e.target.checked },
+              })
+            }
+          />
+        </label>
         {settings.features.notifications && (
           <div className="settings-row">
             <span className="settings-label">Notify at</span>

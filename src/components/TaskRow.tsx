@@ -7,6 +7,7 @@ import {
   IconCalendar,
   IconFlag,
   IconClock,
+  IconRepeat,
 } from '../Icons';
 import type { Task, ZuriSettings } from '../preload';
 
@@ -46,6 +47,13 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
       {task.due}
     </span>
   ) : null;
+  const recur =
+    settings?.features.recurring && task.recur ? (
+      <span className="pill recur">
+        <IconRepeat size={10} />
+        {task.recur}
+      </span>
+    ) : null;
 
   return (
     <div
@@ -68,6 +76,7 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
           {pri}
           {eff}
           {due}
+          {recur}
         </div>
       </div>
       <div className="task-actions">

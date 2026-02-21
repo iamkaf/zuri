@@ -14,6 +14,7 @@ export type ZuriSettings = {
     priority: boolean;
     effort: boolean;
     notifications: boolean;
+    recurring: boolean;
   };
   globalShortcut: {
     enabled: boolean;
@@ -27,6 +28,7 @@ export type ZuriSettings = {
 
 export type Priority = 'P0' | 'P1' | 'P2' | 'P3';
 export type Effort = 'XS' | 'S' | 'M' | 'L' | 'XL';
+export type RecurPattern = 'daily' | 'weekdays' | 'weekly' | 'monthly' | `every ${number} days`;
 
 export type Task = {
   id: string;
@@ -35,6 +37,7 @@ export type Task = {
   priority?: Priority;
   effort?: Effort;
   due?: string;
+  recur?: RecurPattern;
   extra: Record<string, string>;
 };
 

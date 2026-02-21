@@ -1,5 +1,6 @@
 export type Priority = 'P0' | 'P1' | 'P2' | 'P3';
 export type Effort = 'XS' | 'S' | 'M' | 'L' | 'XL';
+export type RecurPattern = 'daily' | 'weekdays' | 'weekly' | 'monthly' | `every ${number} days`;
 
 export type Task = {
   id: string; // derived
@@ -8,6 +9,7 @@ export type Task = {
   priority?: Priority;
   effort?: Effort;
   due?: string; // YYYY-MM-DD
+  recur?: RecurPattern;
   extra: Record<string, string>;
 };
 
@@ -29,6 +31,13 @@ const parseTaskLine = (line: string) => {
   if (!m) return null;
   return { done: m[1].toLowerCase() === 'x', title: m[2].trimEnd() };
 };
+
+const isRecurPattern = (value: string): value is RecurPattern =>
+  value === 'daily' ||
+  value === 'weekdays' ||
+  value === 'weekly' ||
+  value === 'monthly' ||
+  /^every \d+ days$/.test(value);
 
 const isMetaLine = (line: string) => /^\s{2,}-\s+[^:]+:\s*.*$/.test(line);
 const parseMetaLine = (line: string) => {
@@ -98,6 +107,9 @@ export const parseMarkdown = (md: string): DocModel => {
       } else if (key === 'due') {
         if (/^\d{4}-\d{2}-\d{2}$/.test(value)) currentTask.due = value;
         else currentTask.extra[meta.key] = value;
+      } else if (key === 'recur') {
+        if (isRecurPattern(value)) currentTask.recur = value;
+        else currentTask.extra[meta.key] = value;
       } else {
         currentTask.extra[meta.key] = value;
       }
@@ -125,6 +137,7 @@ export const writeMarkdown = (model: DocModel): string => {
       if (task.priority) out.push(`  - priority: ${task.priority}`);
       if (task.effort) out.push(`  - effort: ${task.effort}`);
       if (task.due) out.push(`  - due: ${task.due}`);
+      if (task.recur) out.push(`  - recur: ${task.recur}`);
       for (const [k, v] of Object.entries(task.extra ?? {})) {
         out.push(`  - ${k}: ${v}`);
       }
@@ -135,4 +148,48 @@ export const writeMarkdown = (model: DocModel): string => {
 
   // Trim trailing blank lines to single newline
   return out.join('\n').replace(/\n{3,}$/g, '\n\n').replace(/\s*$/g, '') + '\n';
+};
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const fmtDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+export const nextDue = (pattern: RecurPattern, currentDue?: string): string => {
+  const base =
+    currentDue && /^\d{4}-\d{2}-\d{2}$/.test(currentDue)
+      ? new Date(currentDue + 'T00:00:00')
+      : new Date();
+
+  if (pattern === 'daily') {
+    const d = new Date(base);
+    d.setDate(d.getDate() + 1);
+    return fmtDate(d);
+  }
+
+  if (pattern === 'weekdays') {
+    const d = new Date(base);
+    d.setDate(d.getDate() + 1);
+    while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+    return fmtDate(d);
+  }
+
+  if (pattern === 'weekly') {
+    const d = new Date(base);
+    d.setDate(d.getDate() + 7);
+    return fmtDate(d);
+  }
+
+  if (pattern === 'monthly') {
+    const d = new Date(base);
+    d.setMonth(d.getMonth() + 1);
+    return fmtDate(d);
+  }
+
+  const m = pattern.match(/^every (\d+) days$/);
+  if (m) {
+    const d = new Date(base);
+    d.setDate(d.getDate() + parseInt(m[1], 10));
+    return fmtDate(d);
+  }
+
+  return fmtDate(new Date());
 };

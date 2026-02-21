@@ -403,6 +403,46 @@ export function IconGripVertical({ size = 16, style, className }: IconProps) {
   );
 }
 
+export function IconRepeat({ size = 14, style, className }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 14 14"
+      fill="none"
+      style={style}
+      className={className}
+    >
+      <path
+        d="M2 7C2 4.24 4.24 2 7 2C8.5 2 9.83 2.65 10.77 3.67L12 5"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12 2V5H9"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 7C12 9.76 9.76 12 7 12C5.5 12 4.17 11.35 3.23 10.33L2 9"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+      />
+      <path
+        d="M2 12V9H5"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function IconEllipsis({ size = 16, style, className }: IconProps) {
   return (
     <svg
