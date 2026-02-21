@@ -37,6 +37,20 @@ You can pin a version:
 curl -fsSL https://zuri.kaf.sh/install.sh | ZURI_VERSION=v0.1.0 bash
 ```
 
+## Install (Windows)
+
+Run in PowerShell:
+
+```powershell
+& ([scriptblock]::Create((irm https://zuri.kaf.sh/install.ps1)))
+```
+
+Pin a version:
+
+```powershell
+& ([scriptblock]::Create((irm https://zuri.kaf.sh/install.ps1))) -Version v0.1.0
+```
+
 ## Development setup
 
 You need Node.js 20+.
@@ -89,6 +103,8 @@ npm run make
 - Linux: `.deb`, `.rpm`
 - Windows: Squirrel installer package
 - macOS: local build on a Mac (community/self-build), not an official CI release artifact yet
+
+For full source-build instructions, see `docs/BUILDING_FROM_SOURCE.md`.
 
 ## Releases
 

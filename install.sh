@@ -28,8 +28,14 @@ if ! command -v curl >/dev/null 2>&1; then
   exit 1
 fi
 
-if [[ "$(uname -s)" != "Linux" ]]; then
-  echo "Error: this installer currently supports Linux only." >&2
+OS="$(uname -s)"
+if [[ "$OS" != "Linux" ]]; then
+  if [[ "$OS" == "Darwin" ]]; then
+    echo "macOS binaries are not shipped as first-party releases." >&2
+    echo "Build from source guide: https://github.com/iamkaf/zuri/blob/main/docs/BUILDING_FROM_SOURCE.md" >&2
+  else
+    echo "Error: this installer currently supports Linux only." >&2
+  fi
   exit 1
 fi
 
