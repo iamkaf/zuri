@@ -22,6 +22,7 @@ export type ZuriSettings = {
   };
   theme: ThemeId;
   notificationTime: string; // HH:MM
+  devMode: boolean;
   windowBounds?: { x: number; y: number; width: number; height: number };
   trayAnchor?: { x: number; y: number };
 };

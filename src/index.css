@@ -877,6 +877,20 @@ button {
   padding-top: 8px;
 }
 
+.task-raw {
+  font-family: 'Menlo', 'Consolas', 'Monaco', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin: 0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
 /* ========================================
    SCROLLBARS
    ======================================== */

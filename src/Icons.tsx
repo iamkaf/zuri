@@ -403,6 +403,34 @@ export function IconGripVertical({ size = 16, style, className }: IconProps) {
   );
 }
 
+export function IconCode({ size = 14, style, className }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 14 14"
+      fill="none"
+      style={style}
+      className={className}
+    >
+      <path
+        d="M4.5 3.5L1 7L4.5 10.5"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9.5 3.5L13 7L9.5 10.5"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function IconRepeat({ size = 14, style, className }: IconProps) {
   return (
     <svg

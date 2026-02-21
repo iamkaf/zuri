@@ -24,6 +24,7 @@ export type ZuriSettings = {
   };
   theme: ThemeId;
   notificationTime: string; // HH:MM
+  devMode: boolean;
   windowBounds?: { x: number; y: number; width: number; height: number };
   trayAnchor?: { x: number; y: number };
 };
@@ -52,6 +53,7 @@ export const defaultSettings = (): ZuriSettings => ({
   },
   theme: platformDefaultTheme(),
   notificationTime: '00:00',
+  devMode: false,
 });
 
 export const loadSettings = async (): Promise<ZuriSettings> => {

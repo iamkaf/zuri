@@ -150,6 +150,18 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
         </div>
       </section>
 
+      <section className="settings-card">
+        <h2 className="settings-card-title">Developer</h2>
+        <label className="toggle">
+          <span>Developer mode</span>
+          <input
+            type="checkbox"
+            checked={settings.devMode}
+            onChange={(e) => void onPatchSettings({ devMode: e.target.checked })}
+          />
+        </label>
+      </section>
+
       <p className="settings-foot">
         Settings stored at <code>~/.zuri/settings.json</code>
       </p>

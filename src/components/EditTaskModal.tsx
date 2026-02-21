@@ -1,7 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import { IconClose } from '../Icons';
+import { IconClose, IconCode } from '../Icons';
 import type { RecurPattern, Task, ZuriSettings } from '../preload';
 import type { EditingState } from '../types';
+
+const taskToRaw = (task: Task): string => {
+  const lines: string[] = [];
+  lines.push(`- [${task.done ? 'x' : ' '}] ${task.title}`);
+  if (task.priority) lines.push(`  - priority: ${task.priority}`);
+  if (task.effort)   lines.push(`  - effort: ${task.effort}`);
+  if (task.due)      lines.push(`  - due: ${task.due}`);
+  if (task.recur)    lines.push(`  - recur: ${task.recur}`);
+  if (task.lastDone) lines.push(`  - lastDone: ${task.lastDone}`);
+  for (const [k, v] of Object.entries(task.extra ?? {}))
+    lines.push(`  - ${k}: ${v}`);
+  return lines.join('\n');
+};
 
 export type EditTaskModalProps = {
   editing: EditingState | null;
@@ -17,8 +30,10 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
   const [due, setDue] = useState('');
   const [recurSelect, setRecurSelect] = useState('');
   const [recurDays, setRecurDays] = useState(7);
+  const [showRaw, setShowRaw] = useState(false);
 
   useEffect(() => {
+    setShowRaw(false);
     if (!editing) return;
     setTitle(editing.task.title);
     setPriority(editing.task.priority ?? '');
@@ -89,12 +104,27 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
             <div className="sheet-title">Edit task</div>
             <div className="sheet-subtitle">{editing.section}</div>
           </div>
-          <button className="btn btn-ghost btn-small" onClick={onClose}>
-            <IconClose size={16} />
-          </button>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {settings.devMode && (
+              <button
+                className={`btn btn-ghost btn-small${showRaw ? ' isActive' : ''}`}
+                onClick={() => setShowRaw((v) => !v)}
+                title="Raw markdown"
+              >
+                <IconCode size={14} />
+              </button>
+            )}
+            <button className="btn btn-ghost btn-small" onClick={onClose}>
+              <IconClose size={16} />
+            </button>
+          </div>
         </div>
 
         <div className="sheet-body">
+          {showRaw ? (
+            <pre className="task-raw">{taskToRaw(editing.task)}</pre>
+          ) : null}
+          <div style={showRaw ? { display: 'none' } : undefined}>
           <label className="sheet-field">
             <span>Title</span>
             <input
@@ -192,6 +222,7 @@ export function EditTaskModal({ editing, settings, onClose, onSave }: EditTaskMo
             >
               Save
             </button>
+          </div>
           </div>
         </div>
       </div>
