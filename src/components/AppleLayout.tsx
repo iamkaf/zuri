@@ -149,7 +149,7 @@ export function AppleLayout({
 
   if (!app.settings?.markdownPath) {
     return (
-      <div data-apple-app className="h-full flex flex-col bg-bg">
+      <div data-apple-app className="h-full flex flex-col bg-bg overflow-hidden">
         <main className="flex-1 flex flex-col overflow-hidden">
           <div className="empty">
             <div className="empty-card">
@@ -167,7 +167,7 @@ export function AppleLayout({
   }
 
   return (
-    <div data-apple-app className="h-full flex flex-col bg-bg">
+    <div data-apple-app className="h-full flex flex-col bg-bg overflow-hidden">
       <main className="flex-1 flex flex-col overflow-hidden">
         {app.page === 'tasks' ? (
           <>

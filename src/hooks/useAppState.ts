@@ -138,7 +138,8 @@ export function useAppState() {
       const isDark = current.endsWith('-dark');
       newTheme = isDark ? (`${family}-dark` as ThemeId) : (`${family}-light` as ThemeId);
     }
-    await onPatchSettings({ theme: newTheme });
+    const newLayout: 'apple' | 'standard' = family === 'apple' ? 'apple' : 'standard';
+    await onPatchSettings({ theme: newTheme, layout: newLayout });
   };
 
   return {
