@@ -1,6 +1,6 @@
 {
   "name": "zuri",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "A beautiful, native-feeling task manager that lives in your system tray",
   "keywords": [
