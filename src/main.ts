@@ -30,6 +30,7 @@ let lastTrayClickPoint: { x: number; y: number } | null = null;
 let lastGoodAnchorPoint: { x: number; y: number } | null = null;
 // Fixed tray anchor: once we find a good click location, keep using it (Linux stability)
 let fixedAnchorPoint: { x: number; y: number } | null = null;
+const isDev = Boolean(MAIN_WINDOW_VITE_DEV_SERVER_URL) || !app.isPackaged;
 
 const getAssetPath = (...paths: string[]) => {
   // In dev, this file is built to .vite/build/main.js, so ../../ points at the project root.
@@ -37,6 +38,22 @@ const getAssetPath = (...paths: string[]) => {
   return app.isPackaged
     ? path.join(process.resourcesPath, ...paths)
     : path.join(__dirname, '../../', ...paths);
+};
+
+const tintTrayImage = (image: Electron.NativeImage, color: { r: number; g: number; b: number }) => {
+  const bitmap = image.toBitmap();
+  if (!bitmap.length) return image;
+
+  // Native image bitmap bytes are BGRA.
+  for (let i = 0; i < bitmap.length; i += 4) {
+    const alpha = bitmap[i + 3];
+    if (alpha === 0) continue;
+    bitmap[i] = color.b;
+    bitmap[i + 1] = color.g;
+    bitmap[i + 2] = color.r;
+  }
+
+  return nativeImage.createFromBuffer(bitmap, image.getSize());
 };
 
 const createWindow = async () => {
@@ -184,8 +201,10 @@ const registerGlobalShortcut = (settings: import('./main/settings').ZuriSettings
 const createTray = () => {
   const iconPath = getAssetPath('assets', 'tray.png');
   const image = nativeImage.createFromPath(iconPath);
+  const trayImage =
+    isDev && !image.isEmpty() ? tintTrayImage(image, { r: 59, g: 130, b: 246 }) : image;
 
-  tray = new Tray(image.isEmpty() ? iconPath : image);
+  tray = new Tray(trayImage.isEmpty() ? iconPath : trayImage);
 
   // Tray apps usually have no top menu
   Menu.setApplicationMenu(null);
