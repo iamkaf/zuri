@@ -14,9 +14,6 @@
   ],
   "parser": "@typescript-eslint/parser",
   "settings": {
-    "import/core-modules": [
-      "@vitejs/plugin-react",
-      "@tailwindcss/vite"
-    ]
+    "import/core-modules": ["@vitejs/plugin-react", "@tailwindcss/vite"]
   }
 }

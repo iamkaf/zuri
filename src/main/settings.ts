@@ -93,9 +93,7 @@ export const saveSettings = async (settings: ZuriSettings): Promise<void> => {
   await fs.writeFile(SETTINGS_PATH(), JSON.stringify(settings, null, 2) + '\n', 'utf8');
 };
 
-export const patchSettings = async (
-  patch: Partial<ZuriSettings>,
-): Promise<ZuriSettings> => {
+export const patchSettings = async (patch: Partial<ZuriSettings>): Promise<ZuriSettings> => {
   const current = await loadSettings();
   const next: ZuriSettings = {
     ...current,

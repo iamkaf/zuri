@@ -18,10 +18,12 @@ type ToggleProps = {
 
 function Toggle({ label, checked, onChange, first }: ToggleProps) {
   return (
-    <label className={cn(
-      'flex items-center justify-between w-full py-1.5 text-[13px] text-text cursor-pointer',
-      !first && 'border-t border-edge',
-    )}>
+    <label
+      className={cn(
+        'flex items-center justify-between w-full py-1.5 text-[13px] text-text cursor-pointer',
+        !first && 'border-t border-edge',
+      )}
+    >
       <span>{label}</span>
       <div className="relative inline-flex items-center shrink-0">
         <input
@@ -51,8 +53,13 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
 
   return (
     <div data-settings className="flex flex-col gap-2 p-3 overflow-y-auto h-full">
-      <section data-settings-card className="bg-surface border border-edge rounded-[var(--radius)] px-3 py-[10px]">
-        <h2 className="text-[11px] font-semibold text-subtle uppercase tracking-[0.03em] mb-2">File</h2>
+      <section
+        data-settings-card
+        className="bg-surface border border-edge rounded-[var(--radius)] px-3 py-[10px]"
+      >
+        <h2 className="text-[11px] font-semibold text-subtle uppercase tracking-[0.03em] mb-2">
+          File
+        </h2>
         <div className="flex items-center justify-between py-1.5">
           <span className="text-[13px] text-text">Markdown file</span>
           <div className="flex items-center gap-2">
@@ -66,13 +73,20 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
         </div>
       </section>
 
-      <section data-settings-card className="bg-surface border border-edge rounded-[var(--radius)] px-3 py-[10px]">
-        <h2 className="text-[11px] font-semibold text-subtle uppercase tracking-[0.03em] mb-2">Features</h2>
+      <section
+        data-settings-card
+        className="bg-surface border border-edge rounded-[var(--radius)] px-3 py-[10px]"
+      >
+        <h2 className="text-[11px] font-semibold text-subtle uppercase tracking-[0.03em] mb-2">
+          Features
+        </h2>
         <Toggle
           first
           label="Priority levels"
           checked={settings.features.priority}
-          onChange={(v) => void onPatchSettings({ features: { ...settings.features, priority: v } })}
+          onChange={(v) =>
+            void onPatchSettings({ features: { ...settings.features, priority: v } })
+          }
         />
         <Toggle
           label="Effort estimates"
@@ -80,14 +94,23 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
           onChange={(v) => void onPatchSettings({ features: { ...settings.features, effort: v } })}
         />
         <Toggle
-          label={<><IconBell size={14} className="inline mr-1.5 align-middle" />Notifications</>}
+          label={
+            <>
+              <IconBell size={14} className="inline mr-1.5 align-middle" />
+              Notifications
+            </>
+          }
           checked={settings.features.notifications}
-          onChange={(v) => void onPatchSettings({ features: { ...settings.features, notifications: v } })}
+          onChange={(v) =>
+            void onPatchSettings({ features: { ...settings.features, notifications: v } })
+          }
         />
         <Toggle
           label="Recurring tasks"
           checked={settings.features.recurring}
-          onChange={(v) => void onPatchSettings({ features: { ...settings.features, recurring: v } })}
+          onChange={(v) =>
+            void onPatchSettings({ features: { ...settings.features, recurring: v } })
+          }
         />
         {settings.features.notifications && (
           <div className="flex items-center justify-between py-1.5 border-t border-edge">
@@ -96,20 +119,29 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
               className="input"
               type="time"
               value={settings.notificationTime}
-              onChange={(e) => void onPatchSettings({ notificationTime: e.target.value || '09:00' })}
+              onChange={(e) =>
+                void onPatchSettings({ notificationTime: e.target.value || '09:00' })
+              }
               style={{ width: 120 }}
             />
           </div>
         )}
       </section>
 
-      <section data-settings-card className="bg-surface border border-edge rounded-[var(--radius)] px-3 py-[10px]">
-        <h2 className="text-[11px] font-semibold text-subtle uppercase tracking-[0.03em] mb-2">Shortcuts</h2>
+      <section
+        data-settings-card
+        className="bg-surface border border-edge rounded-[var(--radius)] px-3 py-[10px]"
+      >
+        <h2 className="text-[11px] font-semibold text-subtle uppercase tracking-[0.03em] mb-2">
+          Shortcuts
+        </h2>
         <Toggle
           first
           label="Global shortcut"
           checked={settings.globalShortcut.enabled}
-          onChange={(v) => void onPatchSettings({ globalShortcut: { ...settings.globalShortcut, enabled: v } })}
+          onChange={(v) =>
+            void onPatchSettings({ globalShortcut: { ...settings.globalShortcut, enabled: v } })
+          }
         />
         {settings.globalShortcut.enabled && (
           <div className="flex items-center justify-between py-1.5 border-t border-edge">
@@ -118,21 +150,32 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
               className="input"
               type="text"
               value={settings.globalShortcut.accelerator}
-              onChange={(e) => void onPatchSettings({ globalShortcut: { ...settings.globalShortcut, accelerator: e.target.value } })}
+              onChange={(e) =>
+                void onPatchSettings({
+                  globalShortcut: { ...settings.globalShortcut, accelerator: e.target.value },
+                })
+              }
               style={{ width: 200 }}
             />
           </div>
         )}
       </section>
 
-      <section data-settings-card className="bg-surface border border-edge rounded-[var(--radius)] px-3 py-[10px]">
-        <h2 className="text-[11px] font-semibold text-subtle uppercase tracking-[0.03em] mb-2">Appearance</h2>
+      <section
+        data-settings-card
+        className="bg-surface border border-edge rounded-[var(--radius)] px-3 py-[10px]"
+      >
+        <h2 className="text-[11px] font-semibold text-subtle uppercase tracking-[0.03em] mb-2">
+          Appearance
+        </h2>
         <div className="flex items-center justify-between py-1.5">
           <span className="text-[13px] text-text">Layout</span>
           <select
             className="input"
             value={settings.layout}
-            onChange={(e) => void onPatchSettings({ layout: e.target.value as 'apple' | 'standard' })}
+            onChange={(e) =>
+              void onPatchSettings({ layout: e.target.value as 'apple' | 'standard' })
+            }
             style={{ width: 140 }}
           >
             <option value="standard">Standard</option>
@@ -156,8 +199,13 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
         </div>
       </section>
 
-      <section data-settings-card className="bg-surface border border-edge rounded-[var(--radius)] px-3 py-[10px]">
-        <h2 className="text-[11px] font-semibold text-subtle uppercase tracking-[0.03em] mb-2">Developer</h2>
+      <section
+        data-settings-card
+        className="bg-surface border border-edge rounded-[var(--radius)] px-3 py-[10px]"
+      >
+        <h2 className="text-[11px] font-semibold text-subtle uppercase tracking-[0.03em] mb-2">
+          Developer
+        </h2>
         <Toggle
           first
           label="Developer mode"
@@ -167,7 +215,10 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
       </section>
 
       <p className="text-[11px] text-subtle py-2 text-center">
-        Settings stored at <code className="font-mono bg-overlay px-[5px] py-0.5 rounded-sm">~/.zuri/settings.json</code>
+        Settings stored at{' '}
+        <code className="font-mono bg-overlay px-[5px] py-0.5 rounded-sm">
+          ~/.zuri/settings.json
+        </code>
       </p>
     </div>
   );

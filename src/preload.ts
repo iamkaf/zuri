@@ -75,7 +75,11 @@ const api = {
     updateTask: (section: string, taskId: string, patch: Partial<Task>) =>
       ipcRenderer.invoke('zuri:doc:updateTask', { section, taskId, patch }) as Promise<DocModel>,
     reorderTask: (section: string, fromIndex: number, toIndex: number) =>
-      ipcRenderer.invoke('zuri:doc:reorderTask', { section, fromIndex, toIndex }) as Promise<DocModel>,
+      ipcRenderer.invoke('zuri:doc:reorderTask', {
+        section,
+        fromIndex,
+        toIndex,
+      }) as Promise<DocModel>,
     onChanged: (cb: () => void) => {
       const listener = () => cb();
       ipcRenderer.on('zuri:md:changed', listener);

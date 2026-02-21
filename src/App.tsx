@@ -46,9 +46,7 @@ function App() {
   }, [settingsRef, setApp]);
 
   const currentSection =
-    app.section == null
-      ? null
-      : app.model.sections.find((s) => s.name === app.section) ?? null;
+    app.section === null ? null : (app.model.sections.find((s) => s.name === app.section) ?? null);
 
   const theme = app.settings?.theme ?? 'open-dark';
   const layout = app.settings?.layout ?? 'standard';

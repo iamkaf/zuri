@@ -17,19 +17,21 @@ import { AddTaskForm } from './AddTaskForm';
 import { SettingsForm } from './SettingsForm';
 import { EditTaskModal } from './EditTaskModal';
 
-const navItemClass = (active: boolean) => cn(
-  'relative flex items-center justify-center w-full h-10',
-  'border-none bg-transparent cursor-pointer transition-all',
-  '[&>svg]:w-5 [&>svg]:h-5',
-  active ? 'text-accent' : 'text-muted hover:text-text',
-);
+const navItemClass = (active: boolean) =>
+  cn(
+    'relative flex items-center justify-center w-full h-10',
+    'border-none bg-transparent cursor-pointer transition-all',
+    '[&>svg]:w-5 [&>svg]:h-5',
+    active ? 'text-accent' : 'text-muted hover:text-text',
+  );
 
-const themeItemClass = (active: boolean) => cn(
-  'relative flex items-center justify-center w-full h-9',
-  'border-none bg-transparent cursor-pointer transition-all',
-  '[&>svg]:w-[18px] [&>svg]:h-[18px]',
-  active ? 'text-accent' : 'text-muted hover:text-text',
-);
+const themeItemClass = (active: boolean) =>
+  cn(
+    'relative flex items-center justify-center w-full h-9',
+    'border-none bg-transparent cursor-pointer transition-all',
+    '[&>svg]:w-[18px] [&>svg]:h-[18px]',
+    active ? 'text-accent' : 'text-muted hover:text-text',
+  );
 
 const ActiveIndicator = () => (
   <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-accent rounded-r-sm" />

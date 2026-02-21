@@ -63,7 +63,7 @@ export function TaskList({
     void onReorder(sectionName, oldIndex, newIndex);
   };
 
-  if (section == null) {
+  if (section === null) {
     return (
       <div data-task-list className="flex-1 overflow-y-auto p-2">
         <div className="hint">

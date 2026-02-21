@@ -13,5 +13,5 @@ export const ensureSection = (model: DocModel, current: string | null): string |
   }
   return model.sections.some((s) => s.name === current)
     ? current
-    : model.sections[0]?.name ?? null;
+    : (model.sections[0]?.name ?? null);
 };

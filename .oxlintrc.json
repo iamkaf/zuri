@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-console": "warn",
+    "eqeqeq": "error",
+    "unicorn/no-useless-fallback-in-spread": "off"
+  },
+  "ignorePatterns": ["node_modules", "dist", "out", ".vite"]
+}

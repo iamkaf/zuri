@@ -1,33 +1,54 @@
 {
   "name": "zuri",
-  "productName": "Zuri",
   "version": "1.0.0",
-  "description": "A beautiful, native-feeling task manager that lives in your system tray",
-  "main": ".vite/build/main.js",
   "private": true,
+  "description": "A beautiful, native-feeling task manager that lives in your system tray",
+  "keywords": [
+    "electron",
+    "markdown",
+    "productivity",
+    "task-manager",
+    "todo",
+    "tray-app"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Kaf",
+    "email": "coffeechopdev@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iamkaf/zuri"
+  },
+  "main": ".vite/build/main.js",
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "eslint --ext .ts,.tsx ."
+    "lint": "eslint --ext .ts,.tsx .",
+    "lint:ox": "oxlint .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "typecheck:go": "tsgo --noEmit"
   },
-  "keywords": [
-    "task-manager",
-    "todo",
-    "markdown",
-    "electron",
-    "tray-app",
-    "productivity"
-  ],
-  "author": {
-    "name": "Kaf",
-    "email": "coffeechopdev@gmail.com"
-  },
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/iamkaf/zuri"
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@tailwindcss/vite": "^4.2.0",
+    "clsx": "^2.1.1",
+    "electron-squirrel-startup": "^1.0.1",
+    "lucide-react": "^0.575.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwind-merge": "^3.5.0",
+    "tailwindcss": "^4.2.0"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.11.1",
@@ -45,24 +66,19 @@
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
+    "@typescript/native-preview": "^7.0.0-dev.20260220.1",
     "@vitejs/plugin-react": "^5.1.4",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
     "electron": "40.4.0",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.32.0",
+    "jsdom": "^28.1.0",
+    "oxfmt": "^0.34.0",
+    "oxlint": "^1.49.0",
     "typescript": "^5.9.3",
-    "vite": "^5.4.21"
+    "vite": "^5.4.21",
+    "vitest": "^4.0.18"
   },
-  "dependencies": {
-    "@dnd-kit/core": "^6.3.1",
-    "@dnd-kit/sortable": "^10.0.0",
-    "@dnd-kit/utilities": "^3.2.2",
-    "@tailwindcss/vite": "^4.2.0",
-    "clsx": "^2.1.1",
-    "electron-squirrel-startup": "^1.0.1",
-    "lucide-react": "^0.575.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "tailwind-merge": "^3.5.0",
-    "tailwindcss": "^4.2.0"
-  }
+  "productName": "Zuri"
 }

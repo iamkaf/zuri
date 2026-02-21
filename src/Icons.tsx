@@ -47,7 +47,12 @@ export function IconApple({ size = 18, style, className }: IconProps) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path d="M10.5 5.5C10.5 4 11.5 3 11.5 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path
+        d="M10.5 5.5C10.5 4 11.5 3 11.5 3"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -62,10 +67,30 @@ export function IconWindows({ size = 18, style, className }: IconProps) {
       style={style}
       className={className}
     >
-      <path d="M3 5L8.5 4.2V8.5H3V5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      <path d="M3 9.5H8.5V13.8L3 13V9.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      <path d="M9.5 4L15 3V8.5H9.5V4Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      <path d="M9.5 9.5H15V15L9.5 14V9.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      <path
+        d="M3 5L8.5 4.2V8.5H3V5Z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3 9.5H8.5V13.8L3 13V9.5Z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9.5 4L15 3V8.5H9.5V4Z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9.5 9.5H15V15L9.5 14V9.5Z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

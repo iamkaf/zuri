@@ -1,14 +1,7 @@
 import { forwardRef } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import {
-  IconCheck,
-  IconEdit,
-  IconCalendar,
-  IconFlag,
-  IconClock,
-  IconRepeat,
-} from '../Icons';
+import { IconCheck, IconEdit, IconCalendar, IconFlag, IconClock, IconRepeat } from '../Icons';
 import type { Task, ZuriSettings } from '../preload';
 import { isoToday, recurStateSuffix } from '../lib/date';
 import { cn } from '../lib/cn';
@@ -26,7 +19,17 @@ export type TaskRowProps = {
 };
 
 export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow(
-  { task, settings, onToggle, onEdit, isDragging, dragHandleProps, style, isPendingRemoval, isFocused },
+  {
+    task,
+    settings,
+    onToggle,
+    onEdit,
+    isDragging,
+    dragHandleProps,
+    style,
+    isPendingRemoval,
+    isFocused,
+  },
   ref,
 ) {
   const isDoneToday = !!task.recur && task.lastDone === isoToday();
@@ -34,12 +37,17 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
 
   const pri =
     settings?.features.priority && task.priority ? (
-      <span className={cn(
-        'inline-flex items-center gap-[3px] px-[6px] py-px rounded text-[10px] font-medium',
-        task.priority === 'P0' && 'bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-danger font-semibold',
-        task.priority === 'P1' && 'bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-warn',
-        (task.priority === 'P2' || task.priority === 'P3') && 'bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] text-accent',
-      )}>
+      <span
+        className={cn(
+          'inline-flex items-center gap-[3px] px-[6px] py-px rounded text-[10px] font-medium',
+          task.priority === 'P0' &&
+            'bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-danger font-semibold',
+          task.priority === 'P1' &&
+            'bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-warn',
+          (task.priority === 'P2' || task.priority === 'P3') &&
+            'bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] text-accent',
+        )}
+      >
         <IconFlag size={10} />
         {task.priority}
       </span>
@@ -53,12 +61,13 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
       </span>
     ) : null;
 
-  const due = !task.recur && task.due ? (
-    <span className="inline-flex items-center gap-[3px] px-[6px] py-px rounded bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] text-accent text-[10px] font-medium">
-      <IconCalendar size={10} />
-      {task.due}
-    </span>
-  ) : null;
+  const due =
+    !task.recur && task.due ? (
+      <span className="inline-flex items-center gap-[3px] px-[6px] py-px rounded bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] text-accent text-[10px] font-medium">
+        <IconCalendar size={10} />
+        {task.due}
+      </span>
+    ) : null;
 
   const recur = (() => {
     if (!settings?.features.recurring || !task.recur) return null;
@@ -66,14 +75,17 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
     const isOverdue = !!task.due && task.due < today && task.lastDone !== today;
     const suffix = recurStateSuffix(task.due, task.lastDone);
     return (
-      <span className={cn(
-        'inline-flex items-center gap-[3px] px-[6px] py-px rounded text-[10px] font-medium',
-        isOverdue
-          ? 'bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-warn'
-          : 'bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-success',
-      )}>
+      <span
+        className={cn(
+          'inline-flex items-center gap-[3px] px-[6px] py-px rounded text-[10px] font-medium',
+          isOverdue
+            ? 'bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-warn'
+            : 'bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-success',
+        )}
+      >
         <IconRepeat size={10} />
-        {task.recur}{suffix}
+        {task.recur}
+        {suffix}
       </span>
     );
   })();
@@ -114,10 +126,12 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
         {isDone ? <IconCheck size={12} /> : null}
       </button>
       <div className="min-w-0 flex flex-col gap-0.5">
-        <div className={cn(
-          'font-medium text-[13px] overflow-hidden text-ellipsis whitespace-nowrap',
-          isDone && 'line-through text-muted',
-        )}>
+        <div
+          className={cn(
+            'font-medium text-[13px] overflow-hidden text-ellipsis whitespace-nowrap',
+            isDone && 'line-through text-muted',
+          )}
+        >
           {task.title}
         </div>
         <div className="flex gap-1 flex-wrap">
@@ -127,10 +141,12 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
           {recur}
         </div>
       </div>
-      <div className={cn(
-        'flex gap-1 opacity-0 transition-opacity group-hover:opacity-100',
-        isFocused && 'opacity-100',
-      )}>
+      <div
+        className={cn(
+          'flex gap-1 opacity-0 transition-opacity group-hover:opacity-100',
+          isFocused && 'opacity-100',
+        )}
+      >
         <button className="btn btn-ghost btn-small" onClick={() => onEdit(task.id)}>
           <IconEdit size={14} />
         </button>
@@ -148,15 +164,17 @@ export type SortableTaskRowProps = {
   isFocused?: boolean;
 };
 
-export function SortableTaskRow({ task, settings, onToggle, onEdit, isPendingRemoval, isFocused }: SortableTaskRowProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id });
+export function SortableTaskRow({
+  task,
+  settings,
+  onToggle,
+  onEdit,
+  isPendingRemoval,
+  isFocused,
+}: SortableTaskRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),

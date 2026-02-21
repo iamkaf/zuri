@@ -35,10 +35,7 @@ type WatchHandle = {
   close: () => void;
 };
 
-export const watchMarkdownFile = (
-  filePath: string,
-  win: BrowserWindow,
-): WatchHandle => {
+export const watchMarkdownFile = (filePath: string, win: BrowserWindow): WatchHandle => {
   const dir = path.dirname(filePath);
   let closed = false;
   let timer: NodeJS.Timeout | null = null;

@@ -119,9 +119,7 @@ export function AppleLayout({
     if (!currentSection) return [];
     const base = filteredTasks(currentSection, app.filter);
     if (app.filter === 'open') {
-      const pending = currentSection.tasks.filter(
-        (t) => t.done && app.pendingRemovals.has(t.id),
-      );
+      const pending = currentSection.tasks.filter((t) => t.done && app.pendingRemovals.has(t.id));
       return [...base, ...pending];
     }
     return base;
@@ -224,9 +222,14 @@ export function AppleLayout({
           </>
         ) : (
           <>
-            <div data-content-header className="flex flex-col gap-[10px] p-3 bg-bg border-b border-edge">
+            <div
+              data-content-header
+              className="flex flex-col gap-[10px] p-3 bg-bg border-b border-edge"
+            >
               <div className="flex items-center justify-between">
-                <h1 data-content-title className="text-[18px] font-semibold">Settings</h1>
+                <h1 data-content-title className="text-[18px] font-semibold">
+                  Settings
+                </h1>
                 {ellipsisMenu}
               </div>
             </div>

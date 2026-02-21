@@ -71,9 +71,7 @@ const createWindow = async () => {
     window.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
     window.webContents.openDevTools({ mode: 'detach' });
   } else {
-    window.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
-    );
+    window.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
 
   // Persist last window position/size (best-effort)
@@ -178,9 +176,7 @@ const registerGlobalShortcut = (settings: import('./main/settings').ZuriSettings
       toggleWindow();
     });
     if (!ok) {
-      console.warn(
-        `Failed to register global shortcut: ${settings.globalShortcut.accelerator}`,
-      );
+      console.warn(`Failed to register global shortcut: ${settings.globalShortcut.accelerator}`);
     }
   }
 };

@@ -46,15 +46,18 @@ Tasks are stored as plain markdown:
 # Tasks
 
 ## Inbox
+
 - [ ] Buy groceries
   - priority: P1
   - due: 2024-01-15
 - [x] Call mom
 
 ## Work
+
 - [ ] Review PR
 
 ## Habits
+
 - [ ] Take vitamins
   - recur: daily
 - [ ] Weekly review

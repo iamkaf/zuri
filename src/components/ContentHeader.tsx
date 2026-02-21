@@ -12,7 +12,9 @@ export function ContentHeader({ title, filter, onSetFilter, right }: ContentHead
   return (
     <div data-content-header className="flex flex-col gap-[10px] p-3 bg-bg border-b border-edge">
       <div className="flex items-center justify-between">
-        <h1 data-content-title className="text-[18px] font-semibold">{title}</h1>
+        <h1 data-content-title className="text-[18px] font-semibold">
+          {title}
+        </h1>
         {right}
       </div>
       <div className="flex gap-0.5 p-0.5 bg-overlay rounded">

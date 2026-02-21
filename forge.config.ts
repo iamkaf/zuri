@@ -28,7 +28,7 @@ const config: ForgeConfig = {
         runtime: 'org.freedesktop.Platform',
         base: 'org.electronjs.Electron2.BaseApp',
         baseVersion: '23.08',
-        filesArch: 'x86_64',
+        files: [],
       },
     }),
   ],

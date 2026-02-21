@@ -152,7 +152,12 @@ export const writeMarkdown = (model: DocModel): string => {
   }
 
   // Trim trailing blank lines to single newline
-  return out.join('\n').replace(/\n{3,}$/g, '\n\n').replace(/\s*$/g, '') + '\n';
+  return (
+    out
+      .join('\n')
+      .replace(/\n{3,}$/g, '\n\n')
+      .replace(/\s*$/g, '') + '\n'
+  );
 };
 
 const pad = (n: number) => String(n).padStart(2, '0');

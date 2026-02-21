@@ -1,10 +1,4 @@
-import {
-  IconTask,
-  IconSettings,
-  IconApple,
-  IconWindows,
-  IconSparkle,
-} from '../Icons';
+import { IconTask, IconSettings, IconApple, IconWindows, IconSparkle } from '../Icons';
 import type { ThemeId } from '../preload';
 import type { Page } from '../types';
 import { cn } from '../lib/cn';
@@ -52,13 +46,14 @@ export function AppleMenu({
       : 'animate-[appleMenuEnter_150ms_ease-out_both]',
   );
 
-  const itemClass = (active: boolean) => cn(
-    'flex items-center gap-[10px] w-full px-[10px] py-2',
-    'border-none bg-transparent text-[13px] font-medium text-left',
-    'rounded-[6px] cursor-pointer transition-colors',
-    'hover:bg-accent hover:text-white',
-    active ? 'text-accent' : 'text-text',
-  );
+  const itemClass = (active: boolean) =>
+    cn(
+      'flex items-center gap-[10px] w-full px-[10px] py-2',
+      'border-none bg-transparent text-[13px] font-medium text-left',
+      'rounded-[6px] cursor-pointer transition-colors',
+      'hover:bg-accent hover:text-white',
+      active ? 'text-accent' : 'text-text',
+    );
 
   return (
     <div ref={menuRef} className={menuClass}>
