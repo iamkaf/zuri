@@ -1,17 +1,12 @@
 # Building From Source
 
-This guide is for people who want to build Zuri themselves.
+This guide is for macOS users who want to build Zuri locally.
 
-If you have never done this before, that is fine. Follow the steps in order and copy/paste the commands.
+## 1) Install required tools on your Mac
 
-## 1) Install required tools
+You need Node.js 20+ and Git.
 
-You need:
-
-- Node.js 20 or newer (this includes `npm`)
-- Git
-
-Check if they are installed:
+Check what you already have:
 
 ```bash
 node -v
@@ -19,7 +14,7 @@ npm -v
 git --version
 ```
 
-If one of these commands says "not found", install that tool first and come back.
+If any command says "not found", install that tool first and come back.
 
 ## 2) Download Zuri source code
 
@@ -28,58 +23,32 @@ git clone https://github.com/iamkaf/zuri.git
 cd zuri
 ```
 
-## 3) Install project dependencies
+## 3) Install dependencies
 
 ```bash
 npm install
 ```
 
-This may take a few minutes the first time.
+This can take a few minutes.
 
-## 4) Run Zuri
-
-```bash
-npm start
-```
-
-Zuri should open after the app finishes starting.
-
-## 5) Build an installable package
-
-If you want install files (instead of just running from source), use:
+## 4) Build Zuri
 
 ```bash
 npm run make
 ```
 
-`npm run make` builds for your current operating system.
+After it finishes, check `out/make/` for build artifacts.
 
-## Platform notes
+## If something fails
 
-### Linux
+- If `npm install` fails, run `npm cache verify` and try again.
+- If build fails, delete `out/` and run `npm run make` again.
+- If dependency state looks broken, delete `node_modules` and run `npm install`.
 
-On Debian/Ubuntu, you may need packaging tools first:
+## Other platforms (quick note)
 
-```bash
-sudo apt-get update
-sudo apt-get install -y dpkg fakeroot rpm
-```
-
-After building, look in `out/make/` for `.deb` or `.rpm` files.
-
-### Windows
-
-After building, look in `out/make/` for the installer (`*.Setup.exe`).
-
-### macOS
-
-You can build locally on macOS, but official CI release artifacts are currently Linux + Windows only.
-
-## Troubleshooting
-
-- If `npm install` fails, run `npm cache verify` and retry.
-- If the app does not start, delete `node_modules` and run `npm install` again.
-- If packaging fails, delete `out/` and run `npm run make` again.
+- Linux users may need extra packaging tools before `npm run make`.
+- Windows users get installer artifacts in `out/make/` (for example `*.Setup.exe`).
 
 ## Need help?
 
