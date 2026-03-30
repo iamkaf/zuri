@@ -215,6 +215,7 @@ export function SortableTaskRow({
 }: SortableTaskRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
+    disabled: dragDisabled,
   });
 
   const style = {

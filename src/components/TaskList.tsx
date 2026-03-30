@@ -67,7 +67,6 @@ export function TaskList({
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
-  const sensors = contextMenu ? [] : enabledSensors;
   const activeContextTask =
     contextMenu === null ? null : (tasks.find((task) => task.id === contextMenu.taskId) ?? null);
   const moveTargets =
@@ -111,7 +110,11 @@ export function TaskList({
 
   return (
     <div data-task-list className="flex-1 overflow-y-auto p-2">
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={enabledSensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
         <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (
             <SortableTaskRow
