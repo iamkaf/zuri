@@ -4,7 +4,6 @@ import {
   IconApple,
   IconWindows,
   IconSparkle,
-  IconPlus,
   IconFile,
 } from '../Icons';
 import type { LayoutProps } from '../types';
@@ -16,6 +15,7 @@ import { TaskList } from './TaskList';
 import { AddTaskForm } from './AddTaskForm';
 import { SettingsForm } from './SettingsForm';
 import { EditTaskModal } from './EditTaskModal';
+import { SectionPicker } from './SectionPicker';
 
 const navItemClass = (active: boolean) =>
   cn(
@@ -48,6 +48,9 @@ export function StandardLayout({
   onPatchSettings,
   onToggleTask,
   onEditTask,
+  onMoveTask,
+  onDeleteTask,
+  onSelectSection,
   onAddTask,
   onAddSection,
   onReorderTask,
@@ -124,13 +127,6 @@ export function StandardLayout({
 
   const tasks = currentSection ? filteredTasks(currentSection, app.filter) : [];
 
-  const sectionButton = (
-    <button className="btn btn-small" onClick={() => void onAddSection()}>
-      <IconPlus size={14} />
-      Section
-    </button>
-  );
-
   return (
     <div className="h-full grid grid-cols-[48px_1fr] bg-bg">
       {sidebar}
@@ -139,10 +135,16 @@ export function StandardLayout({
         {app.page === 'tasks' ? (
           <>
             <ContentHeader
-              title={currentSection?.name ?? 'Tasks'}
+              title={
+                <SectionPicker
+                  sections={app.model.sections}
+                  currentSectionName={app.section}
+                  onSelectSection={onSelectSection}
+                  onAddSection={onAddSection}
+                />
+              }
               filter={app.filter}
               onSetFilter={(filter) => setApp((prev) => ({ ...prev, filter }))}
-              right={sectionButton}
             />
             <AddTaskForm
               onAdd={onAddTask}
@@ -152,11 +154,14 @@ export function StandardLayout({
             <TaskList
               tasks={tasks}
               section={currentSection}
+              sections={app.model.sections}
               settings={app.settings}
               pendingRemovals={new Set()}
               focusedTaskId={app.focusedTaskId}
               onToggle={onToggleTask}
               onEdit={onEditTask}
+              onMove={onMoveTask}
+              onDelete={onDeleteTask}
               onReorder={onReorderTask}
               sectionName={app.section}
             />

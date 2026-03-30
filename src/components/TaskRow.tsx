@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { IconCheck, IconEdit, IconCalendar, IconFlag, IconClock, IconRepeat } from '../Icons';
@@ -11,7 +11,9 @@ export type TaskRowProps = {
   settings: ZuriSettings | null;
   onToggle: (taskId: string) => Promise<void>;
   onEdit: (taskId: string) => void;
+  onOpenContextMenu: (taskId: string, x: number, y: number) => void;
   isDragging?: boolean;
+  dragDisabled?: boolean;
   dragHandleProps?: Record<string, unknown>;
   style?: React.CSSProperties;
   isPendingRemoval?: boolean;
@@ -24,7 +26,9 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
     settings,
     onToggle,
     onEdit,
+    onOpenContextMenu,
     isDragging,
+    dragDisabled,
     dragHandleProps,
     style,
     isPendingRemoval,
@@ -32,8 +36,27 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
   },
   ref,
 ) {
+  const titleRef = useRef<HTMLDivElement>(null);
+  const [showTitleTooltip, setShowTitleTooltip] = useState(false);
   const isDoneToday = !!task.recur && task.lastDone === isoToday();
   const isDone = task.done || isDoneToday;
+
+  useEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+
+    const updateTooltip = () => {
+      setShowTitleTooltip(el.scrollWidth > el.clientWidth);
+    };
+
+    updateTooltip();
+
+    if (typeof ResizeObserver === 'undefined') return;
+
+    const observer = new ResizeObserver(updateTooltip);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [task.title]);
 
   const pri =
     settings?.features.priority && task.priority ? (
@@ -102,14 +125,26 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
       className={cn(
         'group grid grid-cols-[auto_1fr_auto] gap-[10px] items-center',
         'py-[10px] px-3 mb-1 bg-surface border border-edge rounded-[var(--radius)]',
-        'transition-all cursor-grab active:cursor-grabbing hover:border-edge-strong',
+        'transition-all hover:border-edge-strong',
+        dragDisabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
         isDragging && 'opacity-50 shadow-lg',
         isFocused && 'border-accent shadow-[0_0_0_1px_var(--accent)]',
         isDone && 'opacity-[0.55]',
         isPendingRemoval && 'opacity-[0.55]',
       )}
       style={style}
-      {...dragHandleProps}
+      onMouseDownCapture={(event) => {
+        if (event.button !== 2) return;
+        event.preventDefault();
+        event.stopPropagation();
+        onOpenContextMenu(task.id, event.clientX, event.clientY);
+      }}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onOpenContextMenu(task.id, event.clientX, event.clientY);
+      }}
+      {...(dragDisabled ? undefined : dragHandleProps)}
     >
       <button
         className={cn(
@@ -127,10 +162,12 @@ export const TaskRow = forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow
       </button>
       <div className="min-w-0 flex flex-col gap-0.5">
         <div
+          ref={titleRef}
           className={cn(
             'font-medium text-[13px] overflow-hidden text-ellipsis whitespace-nowrap',
             isDone && 'line-through text-muted',
           )}
+          title={showTitleTooltip ? task.title : undefined}
         >
           {task.title}
         </div>
@@ -160,8 +197,10 @@ export type SortableTaskRowProps = {
   settings: ZuriSettings | null;
   onToggle: (taskId: string) => Promise<void>;
   onEdit: (taskId: string) => void;
+  onOpenContextMenu: (taskId: string, x: number, y: number) => void;
   isPendingRemoval?: boolean;
   isFocused?: boolean;
+  dragDisabled?: boolean;
 };
 
 export function SortableTaskRow({
@@ -169,8 +208,10 @@ export function SortableTaskRow({
   settings,
   onToggle,
   onEdit,
+  onOpenContextMenu,
   isPendingRemoval,
   isFocused,
+  dragDisabled,
 }: SortableTaskRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -189,7 +230,9 @@ export function SortableTaskRow({
       settings={settings}
       onToggle={onToggle}
       onEdit={onEdit}
+      onOpenContextMenu={onOpenContextMenu}
       isDragging={isDragging}
+      dragDisabled={dragDisabled}
       dragHandleProps={{ ...attributes, ...listeners }}
       isPendingRemoval={isPendingRemoval}
       isFocused={isFocused}

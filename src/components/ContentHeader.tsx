@@ -2,7 +2,7 @@ import { cn } from '../lib/cn';
 import type { TaskFilter } from '../types';
 
 export type ContentHeaderProps = {
-  title: string;
+  title: React.ReactNode;
   filter: TaskFilter;
   onSetFilter: (filter: TaskFilter) => void;
   right?: React.ReactNode;

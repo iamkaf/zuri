@@ -1,11 +1,15 @@
 // Re-export lucide-react icons using Zuri's naming convention
 export {
   Check as IconCheck,
+  ChevronDown as IconChevronDown,
+  ChevronRight as IconChevronRight,
   Plus as IconPlus,
   Settings as IconSettings,
   SquareCheck as IconTask,
   Folder as IconFolder,
+  FolderPlus as IconFolderPlus,
   Pencil as IconEdit,
+  Trash2 as IconTrash,
   X as IconClose,
   Menu as IconMenu,
   Calendar as IconCalendar,

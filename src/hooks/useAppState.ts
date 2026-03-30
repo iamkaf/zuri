@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import type { Task, ThemeId, ZuriSettings } from '../preload';
-import type { AppState, Page } from '../types';
-import { ensureSection } from '../lib/tasks';
+import type { AddSectionResult, AppState, Page } from '../types';
+import { ensureSection, findSectionNameMatch, normalizeSectionName } from '../lib/tasks';
 import { getThemeFamily, cycleTheme } from '../lib/theme';
 
 const initialState: AppState = {
@@ -79,16 +79,30 @@ export function useAppState() {
     setApp((prev) => ({ ...prev, editing: { section, task } }));
   };
 
-  const onAddSection = async () => {
-    const name = prompt('New section name?');
-    const normalized = name?.trim();
-    if (!normalized) return;
+  const onSelectSection = (name: string) => {
+    setApp((prev) => ({ ...prev, section: name, focusedTaskId: null }));
+  };
+
+  const onAddSection = async (name: string): Promise<AddSectionResult> => {
+    const normalized = normalizeSectionName(name);
+    if (!normalized) {
+      return { status: 'invalid', reason: 'empty' };
+    }
+
+    const existing = findSectionNameMatch(app.model.sections, normalized);
+    if (existing) {
+      return { status: 'invalid', reason: 'duplicate', section: existing };
+    }
+
     const model = await window.zuri.doc.addSection(normalized);
+    const created = findSectionNameMatch(model.sections, normalized) ?? normalized;
     setApp((prev) => ({
       ...prev,
       model,
-      section: normalized,
+      section: created,
+      focusedTaskId: null,
     }));
+    return { status: 'created', section: created };
   };
 
   const onAddTask = async (title: string) => {
@@ -119,11 +133,43 @@ export function useAppState() {
     }));
   };
 
+  const onMoveTask = async (fromSection: string, toSection: string, taskId: string) => {
+    const model = await window.zuri.doc.moveTask(fromSection, toSection, taskId);
+    setApp((prev) => ({
+      ...prev,
+      model,
+      editing:
+        prev.editing && prev.editing.section === fromSection && prev.editing.task.id === taskId
+          ? null
+          : prev.editing,
+      focusedTaskId: null,
+      pendingRemovals: new Set(),
+      section: ensureSection(model, prev.section),
+    }));
+  };
+
+  const onDeleteTask = async (section: string, taskId: string) => {
+    const model = await window.zuri.doc.deleteTask(section, taskId);
+    setApp((prev) => ({
+      ...prev,
+      model,
+      editing:
+        prev.editing && prev.editing.section === section && prev.editing.task.id === taskId
+          ? null
+          : prev.editing,
+      focusedTaskId: null,
+      pendingRemovals: new Set(),
+      section: ensureSection(model, prev.section),
+    }));
+  };
+
   const onReorderTask = async (section: string, fromIndex: number, toIndex: number) => {
     const model = await window.zuri.doc.reorderTask(section, fromIndex, toIndex);
     setApp((prev) => ({
       ...prev,
       model,
+      focusedTaskId: null,
+      pendingRemovals: new Set(),
       section: ensureSection(model, prev.section),
     }));
   };
@@ -151,6 +197,9 @@ export function useAppState() {
     onPickMarkdown,
     onToggleTask,
     onEditTask,
+    onMoveTask,
+    onDeleteTask,
+    onSelectSection,
     onAddSection,
     onAddTask,
     onPatchSettings,

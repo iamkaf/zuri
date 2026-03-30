@@ -7,6 +7,7 @@ import { TaskList } from './TaskList';
 import { SettingsForm } from './SettingsForm';
 import { EditTaskModal } from './EditTaskModal';
 import { AppleMenu } from './AppleMenu';
+import { SectionPicker } from './SectionPicker';
 
 export function AppleLayout({
   app,
@@ -18,7 +19,11 @@ export function AppleLayout({
   onPickMarkdown,
   onPatchSettings,
   onEditTask,
+  onMoveTask,
+  onDeleteTask,
+  onSelectSection,
   onAddTask,
+  onAddSection,
   onReorderTask,
   onSaveTask,
 }: LayoutProps) {
@@ -170,7 +175,14 @@ export function AppleLayout({
         {app.page === 'tasks' ? (
           <>
             <ContentHeader
-              title={currentSection?.name ?? 'Tasks'}
+              title={
+                <SectionPicker
+                  sections={app.model.sections}
+                  currentSectionName={app.section}
+                  onSelectSection={onSelectSection}
+                  onAddSection={onAddSection}
+                />
+              }
               filter={app.filter}
               onSetFilter={(filter) => setApp((prev) => ({ ...prev, filter }))}
               right={ellipsisMenu}
@@ -178,11 +190,14 @@ export function AppleLayout({
             <TaskList
               tasks={getVisibleTasks()}
               section={currentSection}
+              sections={app.model.sections}
               settings={app.settings}
               pendingRemovals={app.pendingRemovals}
               focusedTaskId={app.focusedTaskId}
               onToggle={onToggleTaskWithDelay}
               onEdit={onEditTask}
+              onMove={onMoveTask}
+              onDelete={onDeleteTask}
               onReorder={onReorderTask}
               sectionName={app.section}
             />

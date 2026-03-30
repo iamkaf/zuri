@@ -16,6 +16,7 @@ import { ensureFile, readDoc, watchMarkdownFile, writeDoc } from './main/tasks';
 import { rescheduleNotifications } from './main/notify';
 import type { DocModel, Task } from './main/markdown';
 import { nextDue, todayISO } from './main/markdown';
+import { deleteTaskFromSection, moveTaskBetweenSections, reindexTaskIds } from './lib/tasks';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -86,7 +87,9 @@ const createWindow = async () => {
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     window.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-    window.webContents.openDevTools({ mode: 'detach' });
+    if (settings.devMode) {
+      window.webContents.openDevTools({ mode: 'detach' });
+    }
   } else {
     window.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
@@ -365,6 +368,7 @@ app.on('ready', async () => {
     await ensureFile(settings.markdownPath);
     const model = await readDoc(settings.markdownPath);
     fn(model);
+    reindexTaskIds(model);
     await writeDoc(settings.markdownPath, model);
 
     // notify renderer (our own writes won't always trigger watch reliably)
@@ -381,7 +385,11 @@ app.on('ready', async () => {
 
   ipcMain.handle('zuri:doc:addSection', async (_evt, name: string) =>
     mutate((m) => {
-      if (!m.sections.find((s) => s.name === name)) m.sections.push({ name, tasks: [] });
+      const normalized = name.trim();
+      if (!normalized) return;
+      const normalizedLower = normalized.toLocaleLowerCase();
+      if (m.sections.some((section) => section.name.toLocaleLowerCase() === normalizedLower)) return;
+      m.sections.push({ name: normalized, tasks: [] });
     }),
   );
 
@@ -454,6 +462,22 @@ app.on('ready', async () => {
         if (args.toIndex < 0 || args.toIndex >= sec.tasks.length) return;
         const [task] = sec.tasks.splice(args.fromIndex, 1);
         sec.tasks.splice(args.toIndex, 0, task);
+      }),
+  );
+
+  ipcMain.handle(
+    'zuri:doc:moveTask',
+    async (_evt, args: { fromSection: string; toSection: string; taskId: string }) =>
+      mutate((m) => {
+        moveTaskBetweenSections(m, args.fromSection, args.toSection, args.taskId);
+      }),
+  );
+
+  ipcMain.handle(
+    'zuri:doc:deleteTask',
+    async (_evt, args: { section: string; taskId: string }) =>
+      mutate((m) => {
+        deleteTaskFromSection(m, args.section, args.taskId);
       }),
   );
 
