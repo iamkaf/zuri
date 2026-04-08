@@ -16,12 +16,16 @@ import { useEffect, useState } from 'react';
 import { IconCheck, IconFolder } from '../Icons';
 import type { Section, Task, ZuriSettings } from '../preload';
 import { isoToday } from '../lib/date';
-import { SortableTaskRow } from './TaskRow';
+import { findTaskWithSection } from '../lib/tasks';
+import type { SectionSelection, TaskGroup } from '../types';
+import { ALL_SECTIONS } from '../types';
+import { SortableTaskRow, TaskRow } from './TaskRow';
 import { TaskContextMenu } from './TaskContextMenu';
 
 export type TaskListProps = {
   tasks: Task[];
   section: Section | null;
+  taskGroups: TaskGroup[];
   sections: Section[];
   settings: ZuriSettings | null;
   pendingRemovals: Set<string>;
@@ -31,12 +35,13 @@ export type TaskListProps = {
   onMove: (fromSection: string, toSection: string, taskId: string) => Promise<void>;
   onDelete: (section: string, taskId: string) => Promise<void>;
   onReorder: (section: string, fromIndex: number, toIndex: number) => Promise<void>;
-  sectionName: string | null;
+  sectionName: SectionSelection;
 };
 
 export function TaskList({
   tasks,
   section,
+  taskGroups,
   sections,
   settings,
   pendingRemovals,
@@ -52,6 +57,10 @@ export function TaskList({
     null,
   );
   const taskIds = tasks.map((task) => task.id).join('|');
+  const isAggregate = sectionName === ALL_SECTIONS;
+  const visibleTaskIds = isAggregate
+    ? taskGroups.flatMap((group) => group.tasks.map((task) => task.id)).join('|')
+    : taskIds;
 
   useEffect(() => {
     if (!focusedTaskId) return;
@@ -61,22 +70,27 @@ export function TaskList({
 
   useEffect(() => {
     setContextMenu(null);
-  }, [sectionName, taskIds]);
+  }, [sectionName, visibleTaskIds]);
 
   const enabledSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
   const activeContextTask =
-    contextMenu === null ? null : (tasks.find((task) => task.id === contextMenu.taskId) ?? null);
-  const moveTargets =
-    sectionName === null ? [] : sections.filter((entry) => entry.name !== sectionName).map((entry) => entry.name);
+    contextMenu === null
+      ? null
+      : (findTaskWithSection(sections, contextMenu.taskId) ?? null);
+  const moveTargets = activeContextTask
+    ? sections
+        .filter((entry) => entry.name !== activeContextTask.section.name)
+        .map((entry) => entry.name)
+    : [];
 
   const handleDragEnd = (event: DragEndEvent) => {
     if (contextMenu) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    if (!sectionName) return;
+    if (!sectionName || sectionName === ALL_SECTIONS) return;
 
     const allTasks = section?.tasks ?? [];
     const oldIndex = allTasks.findIndex((t) => t.id === active.id);
@@ -85,7 +99,7 @@ export function TaskList({
     void onReorder(sectionName, oldIndex, newIndex);
   };
 
-  if (section === null) {
+  if (sections.length === 0) {
     return (
       <div data-task-list className="flex-1 overflow-y-auto p-2">
         <div className="hint">
@@ -110,27 +124,52 @@ export function TaskList({
 
   return (
     <div data-task-list className="flex-1 overflow-y-auto p-2">
-      <DndContext
-        sensors={enabledSensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-          {tasks.map((task) => (
-            <SortableTaskRow
-              key={task.id}
-              task={task}
-              settings={settings}
-              onToggle={onToggle}
-              onEdit={onEdit}
-              onOpenContextMenu={(taskId, x, y) => setContextMenu({ taskId, x, y })}
-              isPendingRemoval={pendingRemovals.has(task.id)}
-              isFocused={focusedTaskId === task.id}
-              dragDisabled={contextMenu !== null}
-            />
+      {isAggregate ? (
+        <div className="task-group-list">
+          {taskGroups.map((group) => (
+            <section key={group.section.name} className="task-group">
+              <h2 className="task-group__title">{group.section.name}</h2>
+              <div className="task-group__items">
+                {group.tasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    settings={settings}
+                    onToggle={onToggle}
+                    onEdit={onEdit}
+                    onOpenContextMenu={(taskId, x, y) => setContextMenu({ taskId, x, y })}
+                    isPendingRemoval={pendingRemovals.has(task.id)}
+                    isFocused={focusedTaskId === task.id}
+                    dragDisabled
+                  />
+                ))}
+              </div>
+            </section>
           ))}
-        </SortableContext>
-      </DndContext>
+        </div>
+      ) : (
+        <DndContext
+          sensors={enabledSensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+            {tasks.map((task) => (
+              <SortableTaskRow
+                key={task.id}
+                task={task}
+                settings={settings}
+                onToggle={onToggle}
+                onEdit={onEdit}
+                onOpenContextMenu={(taskId, x, y) => setContextMenu({ taskId, x, y })}
+                isPendingRemoval={pendingRemovals.has(task.id)}
+                isFocused={focusedTaskId === task.id}
+                dragDisabled={contextMenu !== null}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
+      )}
 
       <TaskContextMenu
         open={activeContextTask !== null && contextMenu !== null}
@@ -138,25 +177,25 @@ export function TaskList({
         y={contextMenu?.y ?? 0}
         isDone={
           !!activeContextTask &&
-          (activeContextTask.done || activeContextTask.lastDone === isoToday())
+          (activeContextTask.task.done || activeContextTask.task.lastDone === isoToday())
         }
         moveTargets={moveTargets}
         onClose={() => setContextMenu(null)}
         onEdit={() => {
           if (!activeContextTask) return;
-          onEdit(activeContextTask.id);
+          onEdit(activeContextTask.task.id);
         }}
         onToggle={() => {
           if (!activeContextTask) return;
-          void onToggle(activeContextTask.id);
+          void onToggle(activeContextTask.task.id);
         }}
         onMove={(targetSection) => {
-          if (!activeContextTask || !sectionName) return;
-          void onMove(sectionName, targetSection, activeContextTask.id);
+          if (!activeContextTask) return;
+          void onMove(activeContextTask.section.name, targetSection, activeContextTask.task.id);
         }}
         onDelete={() => {
-          if (!activeContextTask || !sectionName) return;
-          void onDelete(sectionName, activeContextTask.id);
+          if (!activeContextTask) return;
+          void onDelete(activeContextTask.section.name, activeContextTask.task.id);
         }}
       />
     </div>

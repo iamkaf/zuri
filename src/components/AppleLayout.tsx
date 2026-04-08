@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { IconPlus, IconEllipsis, IconFile } from '../Icons';
 import type { AppState, LayoutProps } from '../types';
-import { ensureSection, filteredTasks } from '../lib/tasks';
+import {
+  ensureSection,
+  findTaskWithSection,
+  getVisibleTasks as getVisibleTasksForSelection,
+} from '../lib/tasks';
 import { ContentHeader } from './ContentHeader';
 import { TaskList } from './TaskList';
 import { SettingsForm } from './SettingsForm';
@@ -65,11 +69,10 @@ export function AppleLayout({
 
   const onToggleTaskWithDelay = useCallback(
     async (taskId: string) => {
-      const section = app.section;
-      if (!section) return;
-
-      const task = currentSection?.tasks.find((t) => t.id === taskId);
-      if (!task) return;
+      const match = findTaskWithSection(app.model.sections, taskId);
+      if (!match) return;
+      const section = match.section.name;
+      const task = match.task;
 
       if (task.done) {
         const timer = pendingTimersRef.current.get(taskId);
@@ -111,7 +114,7 @@ export function AppleLayout({
         pendingTimersRef.current.set(taskId, timer);
       }
     },
-    [app.section, currentSection, setApp],
+    [app.model.sections, setApp],
   );
 
   useEffect(() => {
@@ -121,14 +124,26 @@ export function AppleLayout({
   }, []);
 
   const getVisibleTasks = () => {
-    if (!currentSection) return [];
-    const base = filteredTasks(currentSection, app.filter);
+    const base = getVisibleTasksFromSelection();
     if (app.filter === 'open') {
-      const pending = currentSection.tasks.filter((t) => t.done && app.pendingRemovals.has(t.id));
+      const pending = app.model.sections
+        .flatMap((section) => section.tasks)
+        .filter((task) => task.done && app.pendingRemovals.has(task.id));
       return [...base, ...pending];
     }
     return base;
   };
+
+  const getVisibleTasksFromSelection = () =>
+    getVisibleTasksForSelection(app.model, app.section, app.filter);
+  const visibleTasks = getVisibleTasks();
+  const visibleTaskIds = new Set(visibleTasks.map((task) => task.id));
+  const visibleTaskGroups = app.model.sections
+    .map((section) => ({
+      section,
+      tasks: section.tasks.filter((task) => visibleTaskIds.has(task.id)),
+    }))
+    .filter((group) => group.tasks.length > 0);
 
   const ellipsisMenu = (
     <div className="relative">
@@ -188,8 +203,9 @@ export function AppleLayout({
               right={ellipsisMenu}
             />
             <TaskList
-              tasks={getVisibleTasks()}
+              tasks={visibleTasks}
               section={currentSection}
+              taskGroups={visibleTaskGroups}
               sections={app.model.sections}
               settings={app.settings}
               pendingRemovals={app.pendingRemovals}

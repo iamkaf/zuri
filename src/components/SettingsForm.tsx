@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { cn } from '../lib/cn';
 import { IconBell } from '../Icons';
 import type { ThemeId, ZuriSettings } from '../preload';
@@ -50,6 +51,30 @@ function Toggle({ label, checked, onChange, first }: ToggleProps) {
 
 export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: SettingsFormProps) {
   const options = Object.keys(themeLabel) as ThemeId[];
+  const markdownPath = settings.markdownPath;
+  const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
+
+  useEffect(() => {
+    if (copyState !== 'copied') return;
+
+    const timeout = window.setTimeout(() => {
+      setCopyState('idle');
+    }, 1500);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [copyState]);
+
+  useEffect(() => {
+    setCopyState('idle');
+  }, [markdownPath]);
+
+  const handleCopyPath = async () => {
+    if (!markdownPath) return;
+    await window.zuri.settings.copyMarkdownPath(markdownPath);
+    setCopyState('copied');
+  };
 
   return (
     <div data-settings className="flex flex-col gap-2 p-3 overflow-y-auto h-full">
@@ -60,16 +85,37 @@ export function SettingsForm({ settings, onPickMarkdown, onPatchSettings }: Sett
         <h2 className="text-[11px] font-semibold text-subtle uppercase tracking-[0.03em] mb-2">
           File
         </h2>
-        <div className="flex items-center justify-between py-1.5">
-          <span className="text-[13px] text-text">Markdown file</span>
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[11px] text-muted max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap">
-              {settings.markdownPath || <em>none</em>}
-            </span>
-            <button className="btn btn-small" onClick={() => void onPickMarkdown()}>
+        <div className="py-1.5">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-[13px] text-text">Markdown file</span>
+            <button className="btn btn-small shrink-0" onClick={() => void onPickMarkdown()}>
               Choose...
             </button>
           </div>
+          <div className="mt-2 rounded-md border border-edge bg-overlay/40 px-2.5 py-2">
+            <span className="block font-mono text-[11px] leading-5 text-muted break-all">
+              {markdownPath || <em>none</em>}
+            </span>
+          </div>
+          {markdownPath && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button className="btn btn-small min-w-[88px]" onClick={() => void handleCopyPath()}>
+                {copyState === 'copied' ? 'Copied' : 'Copy path'}
+              </button>
+              <button
+                className="btn btn-small"
+                onClick={() => void window.zuri.settings.openMarkdownFolder(markdownPath)}
+              >
+                Open folder
+              </button>
+              <button
+                className="btn btn-small"
+                onClick={() => void window.zuri.settings.openMarkdownFile(markdownPath)}
+              >
+                Open file
+              </button>
+            </div>
+          )}
         </div>
       </section>
 

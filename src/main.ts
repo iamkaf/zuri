@@ -8,6 +8,8 @@ import {
   ipcMain,
   dialog,
   globalShortcut,
+  clipboard,
+  shell,
 } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
@@ -352,6 +354,15 @@ app.on('ready', async () => {
     await patchSettings({ markdownPath: picked });
     await startWatchingIfNeeded();
     return picked;
+  });
+  ipcMain.handle('zuri:settings:copyMarkdownPath', async (_evt, filePath: string) => {
+    clipboard.writeText(filePath);
+  });
+  ipcMain.handle('zuri:settings:openMarkdownFolder', async (_evt, filePath: string) => {
+    shell.showItemInFolder(filePath);
+  });
+  ipcMain.handle('zuri:settings:openMarkdownFile', async (_evt, filePath: string) => {
+    await shell.openPath(filePath);
   });
 
   // IPC: markdown doc ops

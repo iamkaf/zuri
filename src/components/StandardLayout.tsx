@@ -9,7 +9,7 @@ import {
 import type { LayoutProps } from '../types';
 import { cn } from '../lib/cn';
 import { getThemeFamily } from '../lib/theme';
-import { filteredTasks } from '../lib/tasks';
+import { getVisibleTasks } from '../lib/tasks';
 import { ContentHeader } from './ContentHeader';
 import { TaskList } from './TaskList';
 import { AddTaskForm } from './AddTaskForm';
@@ -42,6 +42,7 @@ export function StandardLayout({
   setApp,
   theme,
   currentSection,
+  taskGroups,
   onSetPage,
   onSetThemeFamily,
   onPickMarkdown,
@@ -125,7 +126,7 @@ export function StandardLayout({
     );
   }
 
-  const tasks = currentSection ? filteredTasks(currentSection, app.filter) : [];
+  const tasks = getVisibleTasks(app.model, app.section, app.filter);
 
   return (
     <div className="h-full grid grid-cols-[48px_1fr] bg-bg">
@@ -154,6 +155,7 @@ export function StandardLayout({
             <TaskList
               tasks={tasks}
               section={currentSection}
+              taskGroups={taskGroups}
               sections={app.model.sections}
               settings={app.settings}
               pendingRemovals={new Set()}

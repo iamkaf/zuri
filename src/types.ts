@@ -2,6 +2,8 @@ import type { DocModel, Section, Task, ThemeId, ZuriSettings } from './preload';
 
 export type Page = 'tasks' | 'settings';
 export type TaskFilter = 'open' | 'all' | 'done';
+export const ALL_SECTIONS = '__all__';
+export type SectionSelection = string | typeof ALL_SECTIONS | null;
 export type AddSectionResult =
   | { status: 'created'; section: string }
   | { status: 'invalid'; reason: 'empty' }
@@ -12,11 +14,16 @@ export type EditingState = {
   task: Task;
 };
 
+export type TaskGroup = {
+  section: Section;
+  tasks: Task[];
+};
+
 export type AppState = {
   settings: ZuriSettings | null;
   model: DocModel;
   page: Page;
-  section: string | null;
+  section: SectionSelection;
   filter: TaskFilter;
   editing: EditingState | null;
   showAddInput: boolean;
@@ -29,6 +36,7 @@ export type LayoutProps = {
   setApp: React.Dispatch<React.SetStateAction<AppState>>;
   theme: ThemeId;
   currentSection: Section | null;
+  taskGroups: TaskGroup[];
   onSetPage: (page: Page) => void;
   onSetThemeFamily: (family: 'apple' | 'windows' | 'open') => Promise<void>;
   onPickMarkdown: () => Promise<void>;
@@ -37,7 +45,7 @@ export type LayoutProps = {
   onEditTask: (taskId: string) => void;
   onMoveTask: (fromSection: string, toSection: string, taskId: string) => Promise<void>;
   onDeleteTask: (section: string, taskId: string) => Promise<void>;
-  onSelectSection: (name: string) => void;
+  onSelectSection: (name: SectionSelection) => void;
   onAddTask: (title: string) => Promise<void>;
   onAddSection: (name: string) => Promise<AddSectionResult>;
   onReorderTask: (section: string, fromIndex: number, toIndex: number) => Promise<void>;

@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { IconCheck, IconChevronDown, IconFolder, IconFolderPlus } from '../Icons';
 import type { Section } from '../preload';
-import type { AddSectionResult } from '../types';
+import { ALL_SECTIONS, type AddSectionResult, type SectionSelection } from '../types';
 import { cn } from '../lib/cn';
 
 export type SectionPickerProps = {
   sections: Section[];
-  currentSectionName: string | null;
-  onSelectSection: (name: string) => void;
+  currentSectionName: SectionSelection;
+  onSelectSection: (name: SectionSelection) => void;
   onAddSection: (name: string) => Promise<AddSectionResult>;
 };
 
@@ -76,7 +76,7 @@ export function SectionPicker({
     setError(null);
   };
 
-  const handleSelect = (sectionName: string) => {
+  const handleSelect = (sectionName: SectionSelection) => {
     onSelectSection(sectionName);
     setOpen(false);
   };
@@ -107,7 +107,7 @@ export function SectionPicker({
       >
         <span className="section-picker-trigger__label">
           <IconFolder size={15} />
-          <span>{currentSectionName ?? 'Tasks'}</span>
+          <span>{currentSectionName === ALL_SECTIONS ? 'All sections' : (currentSectionName ?? 'Tasks')}</span>
         </span>
         <IconChevronDown
           size={15}
@@ -118,6 +118,18 @@ export function SectionPicker({
       {open && (
         <div className="section-picker-popover" role="menu" aria-label="Sections">
           <div className="section-picker-list">
+            <button
+              type="button"
+              className={cn(
+                'section-picker-item',
+                currentSectionName === ALL_SECTIONS && 'section-picker-item--active',
+              )}
+              onClick={() => handleSelect(ALL_SECTIONS)}
+            >
+              <span className="section-picker-item__label">All sections</span>
+              {currentSectionName === ALL_SECTIONS ? <IconCheck size={14} /> : null}
+            </button>
+            <div className="section-picker-divider" />
             {sections.map((section) => {
               const active = section.name === currentSectionName;
               return (

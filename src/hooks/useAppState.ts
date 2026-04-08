@@ -1,7 +1,12 @@
 import { useCallback, useRef, useState } from 'react';
 import type { Task, ThemeId, ZuriSettings } from '../preload';
-import type { AddSectionResult, AppState, Page } from '../types';
-import { ensureSection, findSectionNameMatch, normalizeSectionName } from '../lib/tasks';
+import { ALL_SECTIONS, type AddSectionResult, type AppState, type Page, type SectionSelection } from '../types';
+import {
+  ensureSection,
+  findSectionNameMatch,
+  findTaskWithSection,
+  normalizeSectionName,
+} from '../lib/tasks';
 import { getThemeFamily, cycleTheme } from '../lib/theme';
 
 const initialState: AppState = {
@@ -59,9 +64,9 @@ export function useAppState() {
   };
 
   const onToggleTask = async (taskId: string) => {
-    const section = app.section;
-    if (!section) return;
-    const model = await window.zuri.doc.toggleTask(section, taskId);
+    const match = findTaskWithSection(app.model.sections, taskId);
+    if (!match) return;
+    const model = await window.zuri.doc.toggleTask(match.section.name, taskId);
     setApp((prev) => ({
       ...prev,
       model,
@@ -70,16 +75,12 @@ export function useAppState() {
   };
 
   const onEditTask = (taskId: string) => {
-    const section = app.section;
-    if (!section) return;
-    const currentSection = app.model.sections.find((s) => s.name === section) ?? null;
-    if (!currentSection) return;
-    const task = currentSection.tasks.find((t) => t.id === taskId);
-    if (!task) return;
-    setApp((prev) => ({ ...prev, editing: { section, task } }));
+    const match = findTaskWithSection(app.model.sections, taskId);
+    if (!match) return;
+    setApp((prev) => ({ ...prev, editing: { section: match.section.name, task: match.task } }));
   };
 
-  const onSelectSection = (name: string) => {
+  const onSelectSection = (name: SectionSelection) => {
     setApp((prev) => ({ ...prev, section: name, focusedTaskId: null }));
   };
 
@@ -106,12 +107,16 @@ export function useAppState() {
   };
 
   const onAddTask = async (title: string) => {
-    const section = app.section ?? app.model.sections[0]?.name ?? 'Inbox';
+    const section =
+      app.section && app.section !== ALL_SECTIONS
+        ? app.section
+        : (findSectionNameMatch(app.model.sections, 'Inbox') ?? 'Inbox');
     const model = await window.zuri.doc.addTask(section, title);
     setApp((prev) => ({
       ...prev,
       model,
-      section: ensureSection(model, prev.section),
+      section:
+        prev.section === ALL_SECTIONS ? ALL_SECTIONS : ensureSection(model, prev.section),
       showAddInput: false,
     }));
   };

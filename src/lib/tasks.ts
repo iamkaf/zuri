@@ -1,5 +1,5 @@
 import type { DocModel, Section, Task } from '../preload';
-import type { TaskFilter } from '../types';
+import { ALL_SECTIONS, type SectionSelection, type TaskFilter, type TaskGroup } from '../types';
 
 export const filteredTasks = (section: Section, filter: TaskFilter): Task[] => {
   if (filter === 'all') return section.tasks;
@@ -15,13 +15,50 @@ export const findSectionNameMatch = (sections: Section[], candidate: string): st
   return sections.find((section) => section.name.toLocaleLowerCase() === normalized)?.name ?? null;
 };
 
-export const ensureSection = (model: DocModel, current: string | null): string | null => {
+export const ensureSection = (model: DocModel, current: SectionSelection): SectionSelection => {
+  if (model.sections.length === 0) {
+    return null;
+  }
+  if (current === ALL_SECTIONS) {
+    return ALL_SECTIONS;
+  }
   if (!current) {
     return model.sections[0]?.name ?? null;
   }
   return model.sections.some((s) => s.name === current)
     ? current
     : (model.sections[0]?.name ?? null);
+};
+
+export const getTaskGroups = (model: DocModel, filter: TaskFilter): TaskGroup[] =>
+  model.sections
+    .map((section) => ({ section, tasks: filteredTasks(section, filter) }))
+    .filter((group) => group.tasks.length > 0);
+
+export const getVisibleTasks = (
+  model: DocModel,
+  selection: SectionSelection,
+  filter: TaskFilter,
+): Task[] => {
+  if (selection === ALL_SECTIONS) {
+    return getTaskGroups(model, filter).flatMap((group) => group.tasks);
+  }
+  if (!selection) return [];
+  const section = model.sections.find((entry) => entry.name === selection);
+  return section ? filteredTasks(section, filter) : [];
+};
+
+export const findTaskWithSection = (
+  sections: Section[],
+  taskId: string,
+): { section: Section; task: Task } | null => {
+  for (const section of sections) {
+    const task = section.tasks.find((entry) => entry.id === taskId);
+    if (task) {
+      return { section, task };
+    }
+  }
+  return null;
 };
 
 export const reindexTaskIds = (model: DocModel): void => {

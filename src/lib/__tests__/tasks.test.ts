@@ -2,13 +2,17 @@ import { describe, it, expect } from 'vitest';
 import {
   deleteTaskFromSection,
   ensureSection,
+  findTaskWithSection,
   filteredTasks,
   findSectionNameMatch,
+  getTaskGroups,
+  getVisibleTasks,
   moveTaskBetweenSections,
   normalizeSectionName,
   reindexTaskIds,
 } from '../tasks';
 import type { Section, Task, DocModel } from '../../preload';
+import { ALL_SECTIONS } from '../../types';
 
 const makeTask = (id: string, done: boolean): Task => ({
   id,
@@ -53,6 +57,11 @@ describe('ensureSection', () => {
     expect(ensureSection(model, 'Work')).toBe('Work');
   });
 
+  it('preserves the all sections selection', () => {
+    const model = makeModel(['Inbox', 'Work']);
+    expect(ensureSection(model, ALL_SECTIONS)).toBe(ALL_SECTIONS);
+  });
+
   it('falls back to first section if current is not in model', () => {
     const model = makeModel(['Inbox', 'Work']);
     expect(ensureSection(model, 'Deleted')).toBe('Inbox');
@@ -66,6 +75,80 @@ describe('ensureSection', () => {
   it('returns null when model has no sections', () => {
     const model = makeModel([]);
     expect(ensureSection(model, null)).toBeNull();
+  });
+});
+
+describe('getTaskGroups', () => {
+  const model: DocModel = {
+    sections: [
+      {
+        name: 'Inbox',
+        tasks: [makeTask('Inbox::0', false), makeTask('Inbox::1', true)],
+      },
+      {
+        name: 'Work',
+        tasks: [makeTask('Work::0', false)],
+      },
+      {
+        name: 'Later',
+        tasks: [],
+      },
+    ],
+  };
+
+  it('returns filtered groups in model order', () => {
+    const groups = getTaskGroups(model, 'open');
+    expect(groups.map((group) => group.section.name)).toEqual(['Inbox', 'Work']);
+    expect(groups[0].tasks.map((task) => task.id)).toEqual(['Inbox::0']);
+    expect(groups[1].tasks.map((task) => task.id)).toEqual(['Work::0']);
+  });
+
+  it('includes done tasks for the all filter', () => {
+    const groups = getTaskGroups(model, 'all');
+    expect(groups[0].tasks.map((task) => task.id)).toEqual(['Inbox::0', 'Inbox::1']);
+  });
+});
+
+describe('getVisibleTasks', () => {
+  const model: DocModel = {
+    sections: [
+      {
+        name: 'Inbox',
+        tasks: [makeTask('Inbox::0', false), makeTask('Inbox::1', true)],
+      },
+      {
+        name: 'Work',
+        tasks: [makeTask('Work::0', false)],
+      },
+    ],
+  };
+
+  it('returns filtered tasks for a single section', () => {
+    expect(getVisibleTasks(model, 'Inbox', 'open').map((task) => task.id)).toEqual(['Inbox::0']);
+  });
+
+  it('returns flattened grouped tasks for all sections', () => {
+    expect(getVisibleTasks(model, ALL_SECTIONS, 'open').map((task) => task.id)).toEqual([
+      'Inbox::0',
+      'Work::0',
+    ]);
+  });
+});
+
+describe('findTaskWithSection', () => {
+  const sections: Section[] = [
+    { name: 'Inbox', tasks: [makeTask('Inbox::0', false)] },
+    { name: 'Work', tasks: [makeTask('Work::0', true)] },
+  ];
+
+  it('finds the task and owning section', () => {
+    const match = findTaskWithSection(sections, 'Work::0');
+    expect(match?.section.name).toBe('Work');
+    expect(match?.task.id).toBe('Work::0');
+  });
+
+  it('returns null for an unknown task id', () => {
+    expect(findTaskWithSection(sections, 'Missing::0')).toBeNull();
   });
 });
 

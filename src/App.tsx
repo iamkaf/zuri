@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useAppState } from './hooks/useAppState';
 import { useKeyboard } from './hooks/useKeyboard';
-import { ensureSection } from './lib/tasks';
+import { ensureSection, getTaskGroups } from './lib/tasks';
+import { ALL_SECTIONS } from './types';
 import { AppleLayout } from './components/AppleLayout';
 import { StandardLayout } from './components/StandardLayout';
 
@@ -49,7 +50,10 @@ function App() {
   }, [settingsRef, setApp]);
 
   const currentSection =
-    app.section === null ? null : (app.model.sections.find((s) => s.name === app.section) ?? null);
+    !app.section || app.section === ALL_SECTIONS
+      ? null
+      : (app.model.sections.find((s) => s.name === app.section) ?? null);
+  const taskGroups = getTaskGroups(app.model, app.filter);
 
   const theme = app.settings?.theme ?? 'open-dark';
   const layout = app.settings?.layout ?? 'standard';
@@ -59,6 +63,7 @@ function App() {
     setApp,
     theme,
     currentSection,
+    taskGroups,
     onSetPage,
     onSetThemeFamily,
     onPickMarkdown,

@@ -63,6 +63,12 @@ const api = {
       ipcRenderer.invoke('zuri:settings:set', patch) as Promise<ZuriSettings>,
     pickMarkdownFile: () =>
       ipcRenderer.invoke('zuri:settings:pickMarkdown') as Promise<string | null>,
+    copyMarkdownPath: (filePath: string) =>
+      ipcRenderer.invoke('zuri:settings:copyMarkdownPath', filePath) as Promise<void>,
+    openMarkdownFolder: (filePath: string) =>
+      ipcRenderer.invoke('zuri:settings:openMarkdownFolder', filePath) as Promise<void>,
+    openMarkdownFile: (filePath: string) =>
+      ipcRenderer.invoke('zuri:settings:openMarkdownFile', filePath) as Promise<void>,
   },
   doc: {
     get: () => ipcRenderer.invoke('zuri:doc:get') as Promise<DocModel>,

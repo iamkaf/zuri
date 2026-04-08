@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
+import { ALL_SECTIONS } from '../types';
 import type { AppState } from '../types';
-import { filteredTasks } from '../lib/tasks';
+import { findTaskWithSection, getVisibleTasks } from '../lib/tasks';
 
 export function useKeyboard(
   appRef: React.RefObject<AppState>,
@@ -77,10 +78,11 @@ export function useKeyboard(
         const sections = a.model.sections;
         if (sections.length === 0) return;
         e.preventDefault();
-        const currentIdx = sections.findIndex((s) => s.name === a.section);
+        const options = [ALL_SECTIONS, ...sections.map((section) => section.name)];
+        const currentIdx = options.findIndex((entry) => entry === a.section);
         const delta = e.key === ']' ? 1 : -1;
-        const nextIdx = (currentIdx + delta + sections.length) % sections.length;
-        setState((prev) => ({ ...prev, section: sections[nextIdx].name, focusedTaskId: null }));
+        const nextIdx = (currentIdx + delta + options.length) % options.length;
+        setState((prev) => ({ ...prev, section: options[nextIdx], focusedTaskId: null }));
         return;
       }
 
@@ -89,9 +91,7 @@ export function useKeyboard(
 
       // J/↓ and K/↑ — task focus navigation
       if (e.key === 'j' || e.key === 'ArrowDown' || e.key === 'k' || e.key === 'ArrowUp') {
-        const section = a.model.sections.find((s) => s.name === a.section);
-        if (!section) return;
-        const tasks = filteredTasks(section, a.filter);
+        const tasks = getVisibleTasks(a.model, a.section, a.filter);
         if (tasks.length === 0) return;
         e.preventDefault();
         const ids = tasks.map((t) => t.id);
@@ -109,11 +109,9 @@ export function useKeyboard(
       // Enter — edit focused task
       if (e.key === 'Enter' && a.focusedTaskId) {
         e.preventDefault();
-        const section = a.model.sections.find((s) => s.name === a.section);
-        if (!section) return;
-        const task = section.tasks.find((t) => t.id === a.focusedTaskId);
-        if (!task) return;
-        setState((prev) => ({ ...prev, editing: { section: section.name, task } }));
+        const match = findTaskWithSection(a.model.sections, a.focusedTaskId);
+        if (!match) return;
+        setState((prev) => ({ ...prev, editing: { section: match.section.name, task: match.task } }));
         return;
       }
 
