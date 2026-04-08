@@ -13,7 +13,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useEffect, useState } from 'react';
-import { IconCheck, IconFolder } from '../Icons';
+import { IconCheck, IconChevronDown, IconFolder } from '../Icons';
 import type { Section, Task, ZuriSettings } from '../preload';
 import { isoToday } from '../lib/date';
 import { findTaskWithSection } from '../lib/tasks';
@@ -36,6 +36,7 @@ export type TaskListProps = {
   onDelete: (section: string, taskId: string) => Promise<void>;
   onReorder: (section: string, fromIndex: number, toIndex: number) => Promise<void>;
   sectionName: SectionSelection;
+  onToggleSectionCollapsed: (sectionName: string) => Promise<void>;
 };
 
 export function TaskList({
@@ -52,6 +53,7 @@ export function TaskList({
   onDelete,
   onReorder,
   sectionName,
+  onToggleSectionCollapsed,
 }: TaskListProps) {
   const [contextMenu, setContextMenu] = useState<{ taskId: string; x: number; y: number } | null>(
     null,
@@ -110,7 +112,7 @@ export function TaskList({
     );
   }
 
-  if (tasks.length === 0) {
+  if ((isAggregate ? taskGroups.length : tasks.length) === 0) {
     return (
       <div data-task-list className="flex-1 overflow-y-auto p-2">
         <div className="empty">
@@ -128,22 +130,38 @@ export function TaskList({
         <div className="task-group-list">
           {taskGroups.map((group) => (
             <section key={group.section.name} className="task-group">
-              <h2 className="task-group__title">{group.section.name}</h2>
-              <div className="task-group__items">
-                {group.tasks.map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    settings={settings}
-                    onToggle={onToggle}
-                    onEdit={onEdit}
-                    onOpenContextMenu={(taskId, x, y) => setContextMenu({ taskId, x, y })}
-                    isPendingRemoval={pendingRemovals.has(task.id)}
-                    isFocused={focusedTaskId === task.id}
-                    dragDisabled
+              <button
+                type="button"
+                className="task-group__header"
+                aria-expanded={!group.collapsed}
+                onClick={() => void onToggleSectionCollapsed(group.section.name)}
+              >
+                <span className="task-group__header-main">
+                  <IconChevronDown
+                    size={14}
+                    className={group.collapsed ? 'task-group__chevron' : 'task-group__chevron task-group__chevron--expanded'}
                   />
-                ))}
-              </div>
+                  <span className="task-group__title">{group.section.name}</span>
+                </span>
+                <span className="task-group__count">{group.visibleCount}</span>
+              </button>
+              {!group.collapsed && (
+                <div className="task-group__items">
+                  {group.tasks.map((task) => (
+                    <TaskRow
+                      key={task.id}
+                      task={task}
+                      settings={settings}
+                      onToggle={onToggle}
+                      onEdit={onEdit}
+                      onOpenContextMenu={(taskId, x, y) => setContextMenu({ taskId, x, y })}
+                      isPendingRemoval={pendingRemovals.has(task.id)}
+                      isFocused={focusedTaskId === task.id}
+                      dragDisabled
+                    />
+                  ))}
+                </div>
+              )}
             </section>
           ))}
         </div>

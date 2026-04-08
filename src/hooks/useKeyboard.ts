@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { ALL_SECTIONS } from '../types';
 import type { AppState } from '../types';
-import { findTaskWithSection, getVisibleTasks } from '../lib/tasks';
+import { findTaskWithSection, getCollapsedSectionNames, getVisibleTasks } from '../lib/tasks';
 
 export function useKeyboard(
   appRef: React.RefObject<AppState>,
@@ -91,7 +91,9 @@ export function useKeyboard(
 
       // J/↓ and K/↑ — task focus navigation
       if (e.key === 'j' || e.key === 'ArrowDown' || e.key === 'k' || e.key === 'ArrowUp') {
-        const tasks = getVisibleTasks(a.model, a.section, a.filter);
+        const tasks = getVisibleTasks(a.model, a.section, a.filter, {
+          collapsedSections: getCollapsedSectionNames(a.settings),
+        });
         if (tasks.length === 0) return;
         e.preventDefault();
         const ids = tasks.map((t) => t.id);

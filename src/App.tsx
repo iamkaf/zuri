@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useAppState } from './hooks/useAppState';
 import { useKeyboard } from './hooks/useKeyboard';
-import { ensureSection, getTaskGroups } from './lib/tasks';
+import { ensureSection, getCollapsedSectionNames, getTaskGroups } from './lib/tasks';
 import { ALL_SECTIONS } from './types';
 import { AppleLayout } from './components/AppleLayout';
 import { StandardLayout } from './components/StandardLayout';
@@ -25,6 +25,7 @@ function App() {
     onSaveTask,
     onReorderTask,
     onSetThemeFamily,
+    onToggleSectionCollapsed,
   } = useAppState();
 
   const appRef = useRef(app);
@@ -53,7 +54,8 @@ function App() {
     !app.section || app.section === ALL_SECTIONS
       ? null
       : (app.model.sections.find((s) => s.name === app.section) ?? null);
-  const taskGroups = getTaskGroups(app.model, app.filter);
+  const collapsedSections = getCollapsedSectionNames(app.settings);
+  const taskGroups = getTaskGroups(app.model, app.filter, { collapsedSections });
 
   const theme = app.settings?.theme ?? 'open-dark';
   const layout = app.settings?.layout ?? 'standard';
@@ -77,6 +79,7 @@ function App() {
     onAddSection,
     onReorderTask,
     onSaveTask,
+    onToggleSectionCollapsed,
   };
 
   if (layout === 'apple') {

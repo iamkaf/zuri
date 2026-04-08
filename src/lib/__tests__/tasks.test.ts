@@ -5,8 +5,10 @@ import {
   findTaskWithSection,
   filteredTasks,
   findSectionNameMatch,
+  getCollapsedSectionNames,
   getTaskGroups,
   getVisibleTasks,
+  isSectionCollapsed,
   moveTaskBetweenSections,
   normalizeSectionName,
   reindexTaskIds,
@@ -107,6 +109,12 @@ describe('getTaskGroups', () => {
     const groups = getTaskGroups(model, 'all');
     expect(groups[0].tasks.map((task) => task.id)).toEqual(['Inbox::0', 'Inbox::1']);
   });
+
+  it('marks configured sections as collapsed and keeps their visible count', () => {
+    const groups = getTaskGroups(model, 'open', { collapsedSections: ['Work'] });
+    expect(groups[0]).toMatchObject({ collapsed: false, visibleCount: 1 });
+    expect(groups[1]).toMatchObject({ collapsed: true, visibleCount: 1 });
+  });
 });
 
 describe('getVisibleTasks', () => {
@@ -132,6 +140,40 @@ describe('getVisibleTasks', () => {
       'Inbox::0',
       'Work::0',
     ]);
+  });
+
+  it('skips collapsed groups in the all sections view', () => {
+    expect(
+      getVisibleTasks(model, ALL_SECTIONS, 'open', { collapsedSections: ['Work'] }).map(
+        (task) => task.id,
+      ),
+    ).toEqual(['Inbox::0']);
+  });
+});
+
+describe('collapsed section helpers', () => {
+  it('returns an empty set when collapsedSections is absent', () => {
+    expect([...getCollapsedSectionNames(null)]).toEqual([]);
+  });
+
+  it('returns the configured collapsed section names', () => {
+    expect([...getCollapsedSectionNames({ collapsedSections: ['Inbox', 'Work'] })]).toEqual([
+      'Inbox',
+      'Work',
+    ]);
+  });
+
+  it('checks whether a section is collapsed', () => {
+    expect(isSectionCollapsed({ collapsedSections: ['Inbox'] }, 'Inbox')).toBe(true);
+    expect(isSectionCollapsed({ collapsedSections: ['Inbox'] }, 'Work')).toBe(false);
+  });
+
+  it('ignores stale collapsed names safely', () => {
+    const model: DocModel = {
+      sections: [{ name: 'Inbox', tasks: [makeTask('Inbox::0', false)] }],
+    };
+    const groups = getTaskGroups(model, 'all', { collapsedSections: ['Missing'] });
+    expect(groups[0]).toMatchObject({ collapsed: false, visibleCount: 1 });
   });
 });
 

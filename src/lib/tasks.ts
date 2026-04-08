@@ -1,4 +1,4 @@
-import type { DocModel, Section, Task } from '../preload';
+import type { DocModel, Section, Task, ZuriSettings } from '../preload';
 import { ALL_SECTIONS, type SectionSelection, type TaskFilter, type TaskGroup } from '../types';
 
 export const filteredTasks = (section: Section, filter: TaskFilter): Task[] => {
@@ -30,22 +30,78 @@ export const ensureSection = (model: DocModel, current: SectionSelection): Secti
     : (model.sections[0]?.name ?? null);
 };
 
-export const getTaskGroups = (model: DocModel, filter: TaskFilter): TaskGroup[] =>
-  model.sections
-    .map((section) => ({ section, tasks: filteredTasks(section, filter) }))
-    .filter((group) => group.tasks.length > 0);
+export const getCollapsedSectionNames = (
+  settings: Pick<ZuriSettings, 'collapsedSections'> | null | undefined,
+): Set<string> =>
+  new Set(
+    Array.isArray(settings?.collapsedSections)
+      ? settings.collapsedSections.filter((entry): entry is string => typeof entry === 'string')
+      : [],
+  );
+
+export const isSectionCollapsed = (
+  settings: Pick<ZuriSettings, 'collapsedSections'> | null | undefined,
+  sectionName: string,
+): boolean => getCollapsedSectionNames(settings).has(sectionName);
+
+export const getTaskGroups = (
+  model: DocModel,
+  filter: TaskFilter,
+  options?: {
+    collapsedSections?: Iterable<string>;
+    extraVisibleTaskIds?: Iterable<string>;
+  },
+): TaskGroup[] => {
+  const collapsedSections = new Set(options?.collapsedSections ?? []);
+  const extraVisibleTaskIds = new Set(options?.extraVisibleTaskIds ?? []);
+
+  return model.sections
+    .map((section) => {
+      const filtered = filteredTasks(section, filter);
+      const extras =
+        extraVisibleTaskIds.size === 0
+          ? []
+          : section.tasks.filter(
+              (task) =>
+                extraVisibleTaskIds.has(task.id) &&
+                !filtered.some((visibleTask) => visibleTask.id === task.id),
+            );
+      const tasks = [...filtered, ...extras];
+      return {
+        section,
+        tasks,
+        visibleCount: tasks.length,
+        collapsed: collapsedSections.has(section.name),
+      };
+    })
+    .filter((group) => group.visibleCount > 0);
+};
 
 export const getVisibleTasks = (
   model: DocModel,
   selection: SectionSelection,
   filter: TaskFilter,
+  options?: {
+    collapsedSections?: Iterable<string>;
+    extraVisibleTaskIds?: Iterable<string>;
+  },
 ): Task[] => {
+  const extraVisibleTaskIds = new Set(options?.extraVisibleTaskIds ?? []);
   if (selection === ALL_SECTIONS) {
-    return getTaskGroups(model, filter).flatMap((group) => group.tasks);
+    return getTaskGroups(model, filter, options)
+      .filter((group) => !group.collapsed)
+      .flatMap((group) => group.tasks);
   }
   if (!selection) return [];
   const section = model.sections.find((entry) => entry.name === selection);
-  return section ? filteredTasks(section, filter) : [];
+  if (!section) return [];
+  const filtered = filteredTasks(section, filter);
+  if (extraVisibleTaskIds.size === 0) return filtered;
+  const extras = section.tasks.filter(
+    (task) =>
+      extraVisibleTaskIds.has(task.id) && !filtered.some((visibleTask) => visibleTask.id === task.id),
+  );
+  return [...filtered, ...extras];
 };
 
 export const findTaskWithSection = (

@@ -17,6 +17,8 @@ export type EditingState = {
 export type TaskGroup = {
   section: Section;
   tasks: Task[];
+  visibleCount: number;
+  collapsed: boolean;
 };
 
 export type AppState = {
@@ -50,4 +52,5 @@ export type LayoutProps = {
   onAddSection: (name: string) => Promise<AddSectionResult>;
   onReorderTask: (section: string, fromIndex: number, toIndex: number) => Promise<void>;
   onSaveTask: (section: string, task: Task, patch: Partial<Task>) => Promise<void>;
+  onToggleSectionCollapsed: (sectionName: string) => Promise<void>;
 };

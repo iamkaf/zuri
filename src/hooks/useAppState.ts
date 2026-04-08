@@ -128,6 +128,16 @@ export function useAppState() {
     setApp((prev) => ({ ...prev, settings }));
   };
 
+  const onToggleSectionCollapsed = async (sectionName: string) => {
+    const collapsed = new Set(app.settings?.collapsedSections ?? []);
+    if (collapsed.has(sectionName)) {
+      collapsed.delete(sectionName);
+    } else {
+      collapsed.add(sectionName);
+    }
+    await onPatchSettings({ collapsedSections: [...collapsed] });
+  };
+
   const onSaveTask = async (section: string, task: Task, patch: Partial<Task>) => {
     const model = await window.zuri.doc.updateTask(section, task.id, patch);
     setApp((prev) => ({
@@ -211,5 +221,6 @@ export function useAppState() {
     onSaveTask,
     onReorderTask,
     onSetThemeFamily,
+    onToggleSectionCollapsed,
   };
 }

@@ -12,6 +12,7 @@ export type ThemeId =
 
 export type ZuriSettings = {
   markdownPath: string | null;
+  collapsedSections?: string[];
   features: {
     priority: boolean;
     effort: boolean;
@@ -45,8 +46,12 @@ const defaultLayout = (): 'apple' | 'standard' => {
   return theme.startsWith('apple-') ? 'apple' : 'standard';
 };
 
+const sanitizeCollapsedSections = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
+
 export const defaultSettings = (): ZuriSettings => ({
   markdownPath: null,
+  collapsedSections: [],
   features: {
     priority: true,
     effort: true,
@@ -73,6 +78,7 @@ export const loadSettings = async (): Promise<ZuriSettings> => {
     return {
       ...defaultSettings(),
       ...parsed,
+      collapsedSections: sanitizeCollapsedSections(parsed.collapsedSections),
       layout: migratedLayout,
       features: {
         ...defaultSettings().features,
@@ -98,6 +104,10 @@ export const patchSettings = async (patch: Partial<ZuriSettings>): Promise<ZuriS
   const next: ZuriSettings = {
     ...current,
     ...patch,
+    collapsedSections:
+      patch.collapsedSections === undefined
+        ? current.collapsedSections
+        : sanitizeCollapsedSections(patch.collapsedSections),
     features: {
       ...current.features,
       ...(patch.features ?? {}),

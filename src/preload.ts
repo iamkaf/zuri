@@ -10,6 +10,7 @@ export type ThemeId =
 
 export type ZuriSettings = {
   markdownPath: string | null;
+  collapsedSections?: string[];
   features: {
     priority: boolean;
     effort: boolean;

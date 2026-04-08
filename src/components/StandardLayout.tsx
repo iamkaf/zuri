@@ -9,7 +9,7 @@ import {
 import type { LayoutProps } from '../types';
 import { cn } from '../lib/cn';
 import { getThemeFamily } from '../lib/theme';
-import { getVisibleTasks } from '../lib/tasks';
+import { getCollapsedSectionNames, getVisibleTasks } from '../lib/tasks';
 import { ContentHeader } from './ContentHeader';
 import { TaskList } from './TaskList';
 import { AddTaskForm } from './AddTaskForm';
@@ -56,6 +56,7 @@ export function StandardLayout({
   onAddSection,
   onReorderTask,
   onSaveTask,
+  onToggleSectionCollapsed,
 }: LayoutProps) {
   const sidebar = (
     <aside className="flex flex-col h-full bg-bg border-r border-edge">
@@ -126,7 +127,9 @@ export function StandardLayout({
     );
   }
 
-  const tasks = getVisibleTasks(app.model, app.section, app.filter);
+  const tasks = getVisibleTasks(app.model, app.section, app.filter, {
+    collapsedSections: getCollapsedSectionNames(app.settings),
+  });
 
   return (
     <div className="h-full grid grid-cols-[48px_1fr] bg-bg">
@@ -166,6 +169,7 @@ export function StandardLayout({
               onDelete={onDeleteTask}
               onReorder={onReorderTask}
               sectionName={app.section}
+              onToggleSectionCollapsed={onToggleSectionCollapsed}
             />
           </>
         ) : app.settings ? (

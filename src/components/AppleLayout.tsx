@@ -4,6 +4,8 @@ import type { AppState, LayoutProps } from '../types';
 import {
   ensureSection,
   findTaskWithSection,
+  getCollapsedSectionNames,
+  getTaskGroups,
   getVisibleTasks as getVisibleTasksForSelection,
 } from '../lib/tasks';
 import { ContentHeader } from './ContentHeader';
@@ -30,6 +32,7 @@ export function AppleLayout({
   onAddSection,
   onReorderTask,
   onSaveTask,
+  onToggleSectionCollapsed,
 }: LayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
@@ -123,27 +126,24 @@ export function AppleLayout({
     };
   }, []);
 
-  const getVisibleTasks = () => {
-    const base = getVisibleTasksFromSelection();
-    if (app.filter === 'open') {
-      const pending = app.model.sections
-        .flatMap((section) => section.tasks)
-        .filter((task) => task.done && app.pendingRemovals.has(task.id));
-      return [...base, ...pending];
-    }
-    return base;
-  };
-
+  const collapsedSections = getCollapsedSectionNames(app.settings);
+  const pendingTaskIds =
+    app.filter === 'open'
+      ? app.model.sections
+          .flatMap((section) => section.tasks)
+          .filter((task) => task.done && app.pendingRemovals.has(task.id))
+          .map((task) => task.id)
+      : [];
   const getVisibleTasksFromSelection = () =>
-    getVisibleTasksForSelection(app.model, app.section, app.filter);
-  const visibleTasks = getVisibleTasks();
-  const visibleTaskIds = new Set(visibleTasks.map((task) => task.id));
-  const visibleTaskGroups = app.model.sections
-    .map((section) => ({
-      section,
-      tasks: section.tasks.filter((task) => visibleTaskIds.has(task.id)),
-    }))
-    .filter((group) => group.tasks.length > 0);
+    getVisibleTasksForSelection(app.model, app.section, app.filter, {
+      collapsedSections,
+      extraVisibleTaskIds: pendingTaskIds,
+    });
+  const visibleTaskGroups = getTaskGroups(app.model, app.filter, {
+    collapsedSections,
+    extraVisibleTaskIds: pendingTaskIds,
+  });
+  const visibleTasks = getVisibleTasksFromSelection();
 
   const ellipsisMenu = (
     <div className="relative">
@@ -216,6 +216,7 @@ export function AppleLayout({
               onDelete={onDeleteTask}
               onReorder={onReorderTask}
               sectionName={app.section}
+              onToggleSectionCollapsed={onToggleSectionCollapsed}
             />
             {app.showAddInput && (
               <div data-task-list className="flex-1 overflow-y-auto p-2">
