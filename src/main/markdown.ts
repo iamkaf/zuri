@@ -407,15 +407,11 @@ export const updateTaskInMarkdownDoc = (
   const task = match.block.task;
   if (typeof patch.title === 'string') task.title = patch.title;
   if (typeof patch.done === 'boolean') task.done = patch.done;
-  if (typeof patch.priority === 'string' || patch.priority === undefined)
-    task.priority = patch.priority as Task['priority'];
-  if (typeof patch.effort === 'string' || patch.effort === undefined)
-    task.effort = patch.effort as Task['effort'];
-  if (typeof patch.due === 'string' || patch.due === undefined) task.due = patch.due;
-  if (typeof patch.recur === 'string' || patch.recur === undefined)
-    task.recur = patch.recur as Task['recur'];
-  if (typeof patch.lastDone === 'string' || patch.lastDone === undefined)
-    task.lastDone = patch.lastDone;
+  if ('priority' in patch) task.priority = patch.priority as Task['priority'];
+  if ('effort' in patch) task.effort = patch.effort as Task['effort'];
+  if ('due' in patch) task.due = patch.due;
+  if ('recur' in patch) task.recur = patch.recur as Task['recur'];
+  if ('lastDone' in patch) task.lastDone = patch.lastDone;
 
   return true;
 };

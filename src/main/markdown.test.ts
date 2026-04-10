@@ -159,6 +159,35 @@ It must survive task edits unchanged.
 `);
   });
 
+  it('preserves existing metadata when a partial patch only changes the title', () => {
+    const markdown = `# Tasks
+
+## Work
+- [ ] Ship release
+  - priority: P1
+  - effort: M
+  - due: 2026-04-15
+  - recur: weekly
+  - lastDone: 2026-04-08
+`;
+
+    const doc = parseMarkdownDocument(markdown);
+    const taskId = findTaskId(markdown, 'Work', 'Ship release');
+
+    expect(updateTaskInMarkdownDoc(doc, taskId, { title: 'Ship release candidate' })).toBe(true);
+
+    expect(writeMarkdownDocument(doc)).toBe(`# Tasks
+
+## Work
+- [ ] Ship release candidate
+  - priority: P1
+  - effort: M
+  - due: 2026-04-15
+  - recur: weekly
+  - lastDone: 2026-04-08
+`);
+  });
+
   it('moves task blocks without deleting prose in the target section', () => {
     const markdown = `# Tasks
 
