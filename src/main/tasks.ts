@@ -2,7 +2,15 @@ import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
 import path from 'node:path';
 import { BrowserWindow } from 'electron';
-import { DocModel, parseMarkdown, writeMarkdown } from './markdown';
+import {
+  DocModel,
+  MarkdownDoc,
+  parseMarkdown,
+  parseMarkdownDocument,
+  toDocModel,
+  writeMarkdown,
+  writeMarkdownDocument,
+} from './markdown';
 
 export const readDoc = async (filePath: string): Promise<DocModel> => {
   try {
@@ -15,8 +23,25 @@ export const readDoc = async (filePath: string): Promise<DocModel> => {
   }
 };
 
+export const readMarkdownDoc = async (filePath: string): Promise<MarkdownDoc> => {
+  try {
+    const raw = await fs.readFile(filePath, 'utf8');
+    return parseMarkdownDocument(raw);
+  } catch (e: unknown) {
+    const maybe = e as { code?: unknown };
+    if (maybe?.code === 'ENOENT') return parseMarkdownDocument('');
+    throw e;
+  }
+};
+
 export const writeDoc = async (filePath: string, model: DocModel): Promise<void> => {
   const text = writeMarkdown(model);
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await fs.writeFile(filePath, text, 'utf8');
+};
+
+export const writeMarkdownDoc = async (filePath: string, doc: MarkdownDoc): Promise<void> => {
+  const text = writeMarkdownDocument(doc);
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, text, 'utf8');
 };
@@ -28,6 +53,8 @@ export const ensureFile = async (filePath: string): Promise<void> => {
     await writeDoc(filePath, { sections: [{ name: 'Inbox', tasks: [] }] });
   }
 };
+
+export const readDocFromMarkdownDoc = (doc: MarkdownDoc): DocModel => toDocModel(doc);
 
 // --- watching ---
 

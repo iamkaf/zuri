@@ -1,6 +1,12 @@
 import { useCallback, useRef, useState } from 'react';
 import type { Task, ThemeId, ZuriSettings } from '../preload';
-import { ALL_SECTIONS, type AddSectionResult, type AppState, type Page, type SectionSelection } from '../types';
+import {
+  ALL_SECTIONS,
+  type AddSectionResult,
+  type AppState,
+  type Page,
+  type SectionSelection,
+} from '../types';
 import {
   ensureSection,
   findSectionNameMatch,
@@ -64,9 +70,7 @@ export function useAppState() {
   };
 
   const onToggleTask = async (taskId: string) => {
-    const match = findTaskWithSection(app.model.sections, taskId);
-    if (!match) return;
-    const model = await window.zuri.doc.toggleTask(match.section.name, taskId);
+    const model = await window.zuri.doc.toggleTask(taskId);
     setApp((prev) => ({
       ...prev,
       model,
@@ -115,8 +119,7 @@ export function useAppState() {
     setApp((prev) => ({
       ...prev,
       model,
-      section:
-        prev.section === ALL_SECTIONS ? ALL_SECTIONS : ensureSection(model, prev.section),
+      section: prev.section === ALL_SECTIONS ? ALL_SECTIONS : ensureSection(model, prev.section),
       showAddInput: false,
     }));
   };
@@ -138,8 +141,8 @@ export function useAppState() {
     await onPatchSettings({ collapsedSections: [...collapsed] });
   };
 
-  const onSaveTask = async (section: string, task: Task, patch: Partial<Task>) => {
-    const model = await window.zuri.doc.updateTask(section, task.id, patch);
+  const onSaveTask = async (_section: string, task: Task, patch: Partial<Task>) => {
+    const model = await window.zuri.doc.updateTask(task.id, patch);
     setApp((prev) => ({
       ...prev,
       model,
@@ -164,7 +167,7 @@ export function useAppState() {
   };
 
   const onDeleteTask = async (section: string, taskId: string) => {
-    const model = await window.zuri.doc.deleteTask(section, taskId);
+    const model = await window.zuri.doc.deleteTask(taskId);
     setApp((prev) => ({
       ...prev,
       model,

@@ -74,7 +74,6 @@ export function AppleLayout({
     async (taskId: string) => {
       const match = findTaskWithSection(app.model.sections, taskId);
       if (!match) return;
-      const section = match.section.name;
       const task = match.task;
 
       if (task.done) {
@@ -88,14 +87,14 @@ export function AppleLayout({
             return { ...prev, pendingRemovals: newSet };
           });
         }
-        const model = await window.zuri.doc.toggleTask(section, taskId);
+        const model = await window.zuri.doc.toggleTask(taskId);
         setApp((prev: AppState) => ({
           ...prev,
           model,
           section: ensureSection(model, prev.section),
         }));
       } else {
-        const model = await window.zuri.doc.toggleTask(section, taskId);
+        const model = await window.zuri.doc.toggleTask(taskId);
         setApp((prev: AppState) => {
           const newSet = new Set(prev.pendingRemovals);
           newSet.add(taskId);

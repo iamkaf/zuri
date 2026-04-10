@@ -23,6 +23,30 @@ export type DocModel = {
   sections: Section[];
 };
 
+type RawBlock = {
+  kind: 'raw';
+  lines: string[];
+};
+
+type TaskBlock = {
+  kind: 'task';
+  task: Task;
+};
+
+type SectionBlock = RawBlock | TaskBlock;
+
+type MarkdownSection = {
+  name: string;
+  headingLine: string;
+  blocks: SectionBlock[];
+};
+
+export type MarkdownDoc = {
+  preamble: string[];
+  sections: MarkdownSection[];
+  hadTerminalNewline: boolean;
+};
+
 const isHeading = (line: string) => /^#{2,6}\s+/.test(line);
 const headingText = (line: string) => line.replace(/^#{2,6}\s+/, '').trim();
 
@@ -47,117 +71,428 @@ const parseMetaLine = (line: string) => {
   return { key: m[1].trim(), value: m[2].trim() };
 };
 
-export const parseMarkdown = (md: string): DocModel => {
-  const lines = md.replace(/\r\n/g, '\n').split('\n');
+const cloneTask = (task: Task): Task => ({
+  ...task,
+  extra: { ...(task.extra ?? {}) },
+});
 
-  const sections: Section[] = [];
-  let currentSection: Section | null = null;
-  let currentTask: Task | null = null;
+const flushRawBlock = (blocks: SectionBlock[], rawLines: string[]) => {
+  if (rawLines.length === 0) return;
+  blocks.push({ kind: 'raw', lines: [...rawLines] });
+  rawLines.length = 0;
+};
 
-  const ensureSection = (name: string) => {
-    let section = sections.find((s) => s.name === name);
-    if (!section) {
-      section = { name, tasks: [] };
-      sections.push(section);
+const compactBlocks = (section: MarkdownSection) => {
+  const next: SectionBlock[] = [];
+
+  for (const block of section.blocks) {
+    if (block.kind === 'raw' && block.lines.length === 0) continue;
+
+    const previous = next[next.length - 1];
+    if (block.kind === 'raw' && previous?.kind === 'raw') {
+      previous.lines.push(...block.lines);
+      continue;
     }
-    return section;
-  };
 
-  const defaultSectionName = 'Inbox';
+    next.push(block);
+  }
+
+  section.blocks = next;
+};
+
+const parseSectionBlocks = (sectionName: string, lines: string[]): SectionBlock[] => {
+  const blocks: SectionBlock[] = [];
+  const rawLines: string[] = [];
+  let taskIndex = 0;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    if (isHeading(line)) {
-      const name = headingText(line);
-      currentSection = ensureSection(name);
-      currentTask = null;
+    if (!isTaskLine(line)) {
+      rawLines.push(line);
       continue;
     }
 
-    if (isTaskLine(line)) {
-      const parsed = parseTaskLine(line);
-      if (!parsed) continue;
-      if (!currentSection) currentSection = ensureSection(defaultSectionName);
+    flushRawBlock(blocks, rawLines);
 
-      const idx = currentSection.tasks.length;
-      const task: Task = {
-        id: `${currentSection.name}::${idx}`,
-        done: parsed.done,
-        title: parsed.title,
-        extra: {},
-      };
-      currentSection.tasks.push(task);
-      currentTask = task;
+    const parsed = parseTaskLine(line);
+    if (!parsed) {
+      rawLines.push(line);
       continue;
     }
 
-    if (currentTask && isMetaLine(line)) {
-      const meta = parseMetaLine(line);
+    const task: Task = {
+      id: `${sectionName}::${taskIndex++}`,
+      done: parsed.done,
+      title: parsed.title,
+      extra: {},
+    };
+
+    for (let j = i + 1; j < lines.length; j++) {
+      const metaLine = lines[j];
+      if (!isMetaLine(metaLine)) break;
+
+      const meta = parseMetaLine(metaLine);
       if (!meta) continue;
 
       const key = meta.key.toLowerCase();
       const value = meta.value;
 
       if (key === 'priority') {
-        if (['P0', 'P1', 'P2', 'P3'].includes(value)) currentTask.priority = value as Priority;
-        else currentTask.extra[meta.key] = value;
+        if (['P0', 'P1', 'P2', 'P3'].includes(value)) task.priority = value as Priority;
+        else task.extra[meta.key] = value;
       } else if (key === 'effort') {
-        if (['XS', 'S', 'M', 'L', 'XL'].includes(value)) currentTask.effort = value as Effort;
-        else currentTask.extra[meta.key] = value;
+        if (['XS', 'S', 'M', 'L', 'XL'].includes(value)) task.effort = value as Effort;
+        else task.extra[meta.key] = value;
       } else if (key === 'due') {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) currentTask.due = value;
-        else currentTask.extra[meta.key] = value;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) task.due = value;
+        else task.extra[meta.key] = value;
       } else if (key === 'recur') {
-        if (isRecurPattern(value)) currentTask.recur = value;
-        else currentTask.extra[meta.key] = value;
+        if (isRecurPattern(value)) task.recur = value;
+        else task.extra[meta.key] = value;
       } else if (key === 'lastdone') {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) currentTask.lastDone = value;
-        else currentTask.extra[meta.key] = value;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) task.lastDone = value;
+        else task.extra[meta.key] = value;
       } else {
-        currentTask.extra[meta.key] = value;
+        task.extra[meta.key] = value;
       }
 
+      i = j;
+    }
+
+    blocks.push({ kind: 'task', task });
+  }
+
+  flushRawBlock(blocks, rawLines);
+  return blocks;
+};
+
+const reindexMarkdownDoc = (doc: MarkdownDoc) => {
+  for (const section of doc.sections) {
+    let index = 0;
+    for (const block of section.blocks) {
+      if (block.kind !== 'task') continue;
+      block.task.id = `${section.name}::${index++}`;
+    }
+  }
+};
+
+const insertTaskBlock = (section: MarkdownSection, block: TaskBlock) => {
+  const lastTaskIndex = [...section.blocks].findLastIndex((entry) => entry.kind === 'task');
+  if (lastTaskIndex !== -1) {
+    section.blocks.splice(lastTaskIndex + 1, 0, block);
+    return;
+  }
+
+  const firstRawIndex = section.blocks.findIndex((entry) => entry.kind === 'raw');
+  if (firstRawIndex === -1) {
+    section.blocks.push(block);
+    return;
+  }
+
+  section.blocks.splice(firstRawIndex, 0, block);
+  const next = section.blocks[firstRawIndex + 1];
+  if (next?.kind === 'raw' && next.lines.length > 0 && next.lines[0] !== '') {
+    next.lines.unshift('');
+  }
+};
+
+const getTaskBlockIndices = (section: MarkdownSection): number[] =>
+  section.blocks.flatMap((block, index) => (block.kind === 'task' ? [index] : []));
+
+const findTaskBlock = (doc: MarkdownDoc, taskId: string) => {
+  for (const section of doc.sections) {
+    for (const [blockIndex, block] of section.blocks.entries()) {
+      if (block.kind === 'task' && block.task.id === taskId) {
+        return { section, blockIndex, block };
+      }
+    }
+  }
+
+  return null;
+};
+
+const toMarkdownTaskLines = (task: Task): string[] => {
+  const lines = [`- [${task.done ? 'x' : ' '}] ${task.title}`];
+  if (task.priority) lines.push(`  - priority: ${task.priority}`);
+  if (task.effort) lines.push(`  - effort: ${task.effort}`);
+  if (task.due) lines.push(`  - due: ${task.due}`);
+  if (task.recur) lines.push(`  - recur: ${task.recur}`);
+  if (task.lastDone) lines.push(`  - lastDone: ${task.lastDone}`);
+  for (const [key, value] of Object.entries(task.extra ?? {})) {
+    lines.push(`  - ${key}: ${value}`);
+  }
+  return lines;
+};
+
+export const parseMarkdownDocument = (md: string): MarkdownDoc => {
+  const normalized = md.replace(/\r\n/g, '\n');
+  const hadTerminalNewline = normalized.endsWith('\n');
+  const trimmed = hadTerminalNewline ? normalized.slice(0, -1) : normalized;
+  const lines = trimmed.length === 0 ? [] : trimmed.split('\n');
+
+  const sections: MarkdownSection[] = [];
+  let preamble = lines;
+  let currentSection: MarkdownSection | null = null;
+  let sectionLines: string[] = [];
+
+  const commitSection = () => {
+    if (!currentSection) {
+      preamble = sectionLines;
+      sectionLines = [];
+      return;
+    }
+
+    currentSection.blocks = parseSectionBlocks(currentSection.name, sectionLines);
+    sections.push(currentSection);
+    sectionLines = [];
+  };
+
+  for (const line of lines) {
+    if (!isHeading(line)) {
+      sectionLines.push(line);
       continue;
     }
 
-    // blank or unrelated line: ignore
+    if (currentSection) {
+      commitSection();
+    } else {
+      preamble = sectionLines;
+      sectionLines = [];
+    }
+
+    currentSection = {
+      name: headingText(line),
+      headingLine: line,
+      blocks: [],
+    };
   }
 
-  return { sections };
+  commitSection();
+
+  const doc = { preamble, sections, hadTerminalNewline };
+  reindexMarkdownDoc(doc);
+  return doc;
+};
+
+export const toDocModel = (doc: MarkdownDoc): DocModel => ({
+  sections: doc.sections.map((section) => ({
+    name: section.name,
+    tasks: section.blocks
+      .filter((block): block is TaskBlock => block.kind === 'task')
+      .map((block) => cloneTask(block.task)),
+  })),
+});
+
+export const parseMarkdown = (md: string): DocModel => toDocModel(parseMarkdownDocument(md));
+
+export const writeMarkdownDocument = (doc: MarkdownDoc): string => {
+  const lines = [...doc.preamble];
+
+  for (const section of doc.sections) {
+    lines.push(section.headingLine);
+
+    for (const block of section.blocks) {
+      if (block.kind === 'raw') {
+        lines.push(...block.lines);
+      } else {
+        lines.push(...toMarkdownTaskLines(block.task));
+      }
+    }
+  }
+
+  const text = lines.join('\n');
+  if (doc.hadTerminalNewline || text.length === 0) return text + '\n';
+  return text;
 };
 
 export const writeMarkdown = (model: DocModel): string => {
   const out: string[] = [];
 
-  // Optional top heading (keeps file friendly)
   out.push('# Tasks', '');
 
   for (const section of model.sections) {
     out.push(`## ${section.name}`);
 
     for (const task of section.tasks) {
-      out.push(`- [${task.done ? 'x' : ' '}] ${task.title}`);
-      if (task.priority) out.push(`  - priority: ${task.priority}`);
-      if (task.effort) out.push(`  - effort: ${task.effort}`);
-      if (task.due) out.push(`  - due: ${task.due}`);
-      if (task.recur) out.push(`  - recur: ${task.recur}`);
-      if (task.lastDone) out.push(`  - lastDone: ${task.lastDone}`);
-      for (const [k, v] of Object.entries(task.extra ?? {})) {
-        out.push(`  - ${k}: ${v}`);
-      }
+      out.push(...toMarkdownTaskLines(task));
     }
 
     out.push('');
   }
 
-  // Trim trailing blank lines to single newline
   return (
     out
       .join('\n')
       .replace(/\n{3,}$/g, '\n\n')
       .replace(/\s*$/g, '') + '\n'
   );
+};
+
+export const addSectionToMarkdownDoc = (doc: MarkdownDoc, name: string): boolean => {
+  const normalized = name.trim();
+  if (!normalized) return false;
+
+  const normalizedLower = normalized.toLocaleLowerCase();
+  if (doc.sections.some((section) => section.name.toLocaleLowerCase() === normalizedLower))
+    return false;
+
+  if (doc.sections.length === 0 && doc.preamble.length === 0) {
+    doc.preamble = ['# Tasks', ''];
+  }
+
+  doc.sections.push({
+    name: normalized,
+    headingLine: `## ${normalized}`,
+    blocks: [],
+  });
+  return true;
+};
+
+export const addTaskToMarkdownDoc = (
+  doc: MarkdownDoc,
+  sectionName: string,
+  title: string,
+): boolean => {
+  let section = doc.sections.find((entry) => entry.name === sectionName);
+  if (!section) {
+    section = {
+      name: sectionName,
+      headingLine: `## ${sectionName}`,
+      blocks: [],
+    };
+    doc.sections.push(section);
+  }
+
+  insertTaskBlock(section, {
+    kind: 'task',
+    task: {
+      id: '',
+      done: false,
+      title,
+      extra: {},
+    },
+  });
+  reindexMarkdownDoc(doc);
+  return true;
+};
+
+export const toggleTaskInMarkdownDoc = (doc: MarkdownDoc, taskId: string): boolean => {
+  const match = findTaskBlock(doc, taskId);
+  if (!match) return false;
+
+  const task = match.block.task;
+  if (task.recur && !task.done) {
+    if (task.lastDone === todayISO()) {
+      task.lastDone = undefined;
+    } else {
+      task.lastDone = todayISO();
+      task.due = nextDue(task.recur, task.due);
+    }
+  } else {
+    task.done = !task.done;
+  }
+
+  return true;
+};
+
+export const updateTaskInMarkdownDoc = (
+  doc: MarkdownDoc,
+  taskId: string,
+  patch: Partial<Task>,
+): boolean => {
+  const match = findTaskBlock(doc, taskId);
+  if (!match) return false;
+
+  const task = match.block.task;
+  if (typeof patch.title === 'string') task.title = patch.title;
+  if (typeof patch.done === 'boolean') task.done = patch.done;
+  if ('priority' in patch) task.priority = patch.priority as Task['priority'];
+  if ('effort' in patch) task.effort = patch.effort as Task['effort'];
+  if ('due' in patch) task.due = patch.due;
+  if ('recur' in patch) task.recur = patch.recur as Task['recur'];
+  if ('lastDone' in patch) task.lastDone = patch.lastDone;
+
+  return true;
+};
+
+export const reorderTaskInMarkdownDoc = (
+  doc: MarkdownDoc,
+  sectionName: string,
+  fromIndex: number,
+  toIndex: number,
+): boolean => {
+  const section = doc.sections.find((entry) => entry.name === sectionName);
+  if (!section || fromIndex === toIndex) return false;
+
+  const taskBlockIndices = getTaskBlockIndices(section);
+  if (fromIndex < 0 || fromIndex >= taskBlockIndices.length) return false;
+  if (toIndex < 0 || toIndex >= taskBlockIndices.length) return false;
+
+  const [block] = section.blocks.splice(taskBlockIndices[fromIndex], 1);
+  if (!block) return false;
+
+  const remainingTaskBlockIndices = getTaskBlockIndices(section);
+  if (remainingTaskBlockIndices.length === 0) {
+    section.blocks.unshift(block);
+  } else if (toIndex >= remainingTaskBlockIndices.length) {
+    section.blocks.splice(
+      remainingTaskBlockIndices[remainingTaskBlockIndices.length - 1] + 1,
+      0,
+      block,
+    );
+  } else {
+    section.blocks.splice(remainingTaskBlockIndices[toIndex], 0, block);
+  }
+
+  compactBlocks(section);
+  reindexMarkdownDoc(doc);
+  return true;
+};
+
+export const moveTaskBetweenSectionsInMarkdownDoc = (
+  doc: MarkdownDoc,
+  fromSectionName: string,
+  toSectionName: string,
+  taskId: string,
+): boolean => {
+  if (fromSectionName === toSectionName) return false;
+
+  const source = doc.sections.find((section) => section.name === fromSectionName);
+  if (!source) return false;
+
+  const taskBlockIndex = source.blocks.findIndex(
+    (block) => block.kind === 'task' && block.task.id === taskId,
+  );
+  if (taskBlockIndex === -1) return false;
+
+  let target = doc.sections.find((section) => section.name === toSectionName);
+  if (!target) {
+    target = {
+      name: toSectionName,
+      headingLine: `## ${toSectionName}`,
+      blocks: [],
+    };
+    doc.sections.push(target);
+  }
+
+  const [block] = source.blocks.splice(taskBlockIndex, 1);
+  if (!block || block.kind !== 'task') return false;
+
+  compactBlocks(source);
+  insertTaskBlock(target, block);
+  reindexMarkdownDoc(doc);
+  return true;
+};
+
+export const deleteTaskFromMarkdownDoc = (doc: MarkdownDoc, taskId: string): boolean => {
+  const match = findTaskBlock(doc, taskId);
+  if (!match) return false;
+
+  match.section.blocks.splice(match.blockIndex, 1);
+  compactBlocks(match.section);
+  reindexMarkdownDoc(doc);
+  return true;
 };
 
 const pad = (n: number) => String(n).padStart(2, '0');
