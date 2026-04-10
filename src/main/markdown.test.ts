@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  deleteTaskFromMarkdownDoc,
   moveTaskBetweenSectionsInMarkdownDoc,
   parseMarkdownDocument,
   toDocModel,
@@ -179,6 +180,36 @@ Project context lives here.
 
 ## Notes
 - [ ] Ship release
+
+Project context lives here.
+`);
+  });
+
+  it('deletes by task id after a move without relying on the previous section', () => {
+    const markdown = `# Tasks
+
+## Work
+- [ ] Ship release
+
+## Notes
+Project context lives here.
+`;
+
+    const doc = parseMarkdownDocument(markdown);
+    const taskId = findTaskId(markdown, 'Work', 'Ship release');
+
+    expect(moveTaskBetweenSectionsInMarkdownDoc(doc, 'Work', 'Notes', taskId)).toBe(true);
+    const movedTaskId = toDocModel(doc)
+      .sections.find((section) => section.name === 'Notes')
+      ?.tasks.find((task) => task.title === 'Ship release')?.id;
+    expect(movedTaskId).toBeDefined();
+    expect(deleteTaskFromMarkdownDoc(doc, movedTaskId!)).toBe(true);
+
+    expect(writeMarkdownDocument(doc)).toBe(`# Tasks
+
+## Work
+
+## Notes
 
 Project context lives here.
 `);

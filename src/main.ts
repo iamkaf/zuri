@@ -420,7 +420,7 @@ app.on('ready', async () => {
     }),
   );
 
-  ipcMain.handle('zuri:doc:toggleTask', async (_evt, args: { section: string; taskId: string }) =>
+  ipcMain.handle('zuri:doc:toggleTask', async (_evt, args: { taskId: string }) =>
     mutate((doc) => {
       toggleTaskInMarkdownDoc(doc, args.taskId);
     }),
@@ -428,7 +428,7 @@ app.on('ready', async () => {
 
   ipcMain.handle(
     'zuri:doc:updateTask',
-    async (_evt, args: { section: string; taskId: string; patch: Partial<Task> }) =>
+    async (_evt, args: { taskId: string; patch: Partial<Task> }) =>
       mutate((doc) => {
         updateTaskInMarkdownDoc(doc, args.taskId, args.patch);
       }),
@@ -450,9 +450,9 @@ app.on('ready', async () => {
       }),
   );
 
-  ipcMain.handle('zuri:doc:deleteTask', async (_evt, args: { section: string; taskId: string }) =>
+  ipcMain.handle('zuri:doc:deleteTask', async (_evt, args: { taskId: string }) =>
     mutate((doc) => {
-      deleteTaskFromMarkdownDoc(doc, args.section, args.taskId);
+      deleteTaskFromMarkdownDoc(doc, args.taskId);
     }),
   );
 

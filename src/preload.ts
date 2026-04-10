@@ -77,14 +77,18 @@ const api = {
       ipcRenderer.invoke('zuri:doc:addSection', name) as Promise<DocModel>,
     addTask: (section: string, title: string) =>
       ipcRenderer.invoke('zuri:doc:addTask', { section, title }) as Promise<DocModel>,
-    toggleTask: (section: string, taskId: string) =>
-      ipcRenderer.invoke('zuri:doc:toggleTask', { section, taskId }) as Promise<DocModel>,
-    updateTask: (section: string, taskId: string, patch: Partial<Task>) =>
-      ipcRenderer.invoke('zuri:doc:updateTask', { section, taskId, patch }) as Promise<DocModel>,
+    toggleTask: (taskId: string) =>
+      ipcRenderer.invoke('zuri:doc:toggleTask', { taskId }) as Promise<DocModel>,
+    updateTask: (taskId: string, patch: Partial<Task>) =>
+      ipcRenderer.invoke('zuri:doc:updateTask', { taskId, patch }) as Promise<DocModel>,
     moveTask: (fromSection: string, toSection: string, taskId: string) =>
-      ipcRenderer.invoke('zuri:doc:moveTask', { fromSection, toSection, taskId }) as Promise<DocModel>,
-    deleteTask: (section: string, taskId: string) =>
-      ipcRenderer.invoke('zuri:doc:deleteTask', { section, taskId }) as Promise<DocModel>,
+      ipcRenderer.invoke('zuri:doc:moveTask', {
+        fromSection,
+        toSection,
+        taskId,
+      }) as Promise<DocModel>,
+    deleteTask: (taskId: string) =>
+      ipcRenderer.invoke('zuri:doc:deleteTask', { taskId }) as Promise<DocModel>,
     reorderTask: (section: string, fromIndex: number, toIndex: number) =>
       ipcRenderer.invoke('zuri:doc:reorderTask', {
         section,

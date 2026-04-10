@@ -489,21 +489,12 @@ export const moveTaskBetweenSectionsInMarkdownDoc = (
   return true;
 };
 
-export const deleteTaskFromMarkdownDoc = (
-  doc: MarkdownDoc,
-  sectionName: string,
-  taskId: string,
-): boolean => {
-  const section = doc.sections.find((entry) => entry.name === sectionName);
-  if (!section) return false;
+export const deleteTaskFromMarkdownDoc = (doc: MarkdownDoc, taskId: string): boolean => {
+  const match = findTaskBlock(doc, taskId);
+  if (!match) return false;
 
-  const taskBlockIndex = section.blocks.findIndex(
-    (block) => block.kind === 'task' && block.task.id === taskId,
-  );
-  if (taskBlockIndex === -1) return false;
-
-  section.blocks.splice(taskBlockIndex, 1);
-  compactBlocks(section);
+  match.section.blocks.splice(match.blockIndex, 1);
+  compactBlocks(match.section);
   reindexMarkdownDoc(doc);
   return true;
 };
