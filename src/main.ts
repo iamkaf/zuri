@@ -14,11 +14,25 @@ import {
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { loadSettings, patchSettings } from './main/settings';
-import { ensureFile, readDoc, watchMarkdownFile, writeDoc } from './main/tasks';
+import {
+  ensureFile,
+  readDoc,
+  readDocFromMarkdownDoc,
+  readMarkdownDoc,
+  watchMarkdownFile,
+  writeMarkdownDoc,
+} from './main/tasks';
 import { rescheduleNotifications } from './main/notify';
-import type { DocModel, Task } from './main/markdown';
-import { nextDue, todayISO } from './main/markdown';
-import { deleteTaskFromSection, moveTaskBetweenSections, reindexTaskIds } from './lib/tasks';
+import type { DocModel, MarkdownDoc, Task } from './main/markdown';
+import {
+  addSectionToMarkdownDoc,
+  addTaskToMarkdownDoc,
+  deleteTaskFromMarkdownDoc,
+  moveTaskBetweenSectionsInMarkdownDoc,
+  reorderTaskInMarkdownDoc,
+  toggleTaskInMarkdownDoc,
+  updateTaskInMarkdownDoc,
+} from './main/markdown';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -373,14 +387,14 @@ app.on('ready', async () => {
     return readDoc(settings.markdownPath);
   });
 
-  const mutate = async (fn: (model: DocModel) => void): Promise<DocModel> => {
+  const mutate = async (fn: (doc: MarkdownDoc) => void): Promise<DocModel> => {
     const settings = await loadSettings();
     if (!settings.markdownPath) return { sections: [] };
     await ensureFile(settings.markdownPath);
-    const model = await readDoc(settings.markdownPath);
-    fn(model);
-    reindexTaskIds(model);
-    await writeDoc(settings.markdownPath, model);
+    const doc = await readMarkdownDoc(settings.markdownPath);
+    fn(doc);
+    await writeMarkdownDoc(settings.markdownPath, doc);
+    const model = readDocFromMarkdownDoc(doc);
 
     // notify renderer (our own writes won't always trigger watch reliably)
     window?.webContents.send('zuri:md:changed');
@@ -395,101 +409,51 @@ app.on('ready', async () => {
   };
 
   ipcMain.handle('zuri:doc:addSection', async (_evt, name: string) =>
-    mutate((m) => {
-      const normalized = name.trim();
-      if (!normalized) return;
-      const normalizedLower = normalized.toLocaleLowerCase();
-      if (m.sections.some((section) => section.name.toLocaleLowerCase() === normalizedLower)) return;
-      m.sections.push({ name: normalized, tasks: [] });
+    mutate((doc) => {
+      addSectionToMarkdownDoc(doc, name);
     }),
   );
 
   ipcMain.handle('zuri:doc:addTask', async (_evt, args: { section: string; title: string }) =>
-    mutate((m) => {
-      let sec = m.sections.find((s) => s.name === args.section);
-      if (!sec) {
-        sec = { name: args.section, tasks: [] };
-        m.sections.push(sec);
-      }
-      sec.tasks.push({
-        id: `${sec.name}::${sec.tasks.length}`,
-        done: false,
-        title: args.title,
-        extra: {},
-      });
+    mutate((doc) => {
+      addTaskToMarkdownDoc(doc, args.section, args.title);
     }),
   );
 
   ipcMain.handle('zuri:doc:toggleTask', async (_evt, args: { section: string; taskId: string }) =>
-    mutate((m) => {
-      const sec = m.sections.find((s) => s.name === args.section);
-      const task = sec?.tasks.find((t) => t.id === args.taskId);
-      if (!task) return;
-      if (task.recur && !task.done) {
-        if (task.lastDone === todayISO()) {
-          // Already done today — undo the completion
-          task.lastDone = undefined;
-        } else {
-          // Complete: record date and advance due
-          task.lastDone = todayISO();
-          task.due = nextDue(task.recur, task.due);
-        }
-      } else {
-        task.done = !task.done;
-      }
+    mutate((doc) => {
+      toggleTaskInMarkdownDoc(doc, args.taskId);
     }),
   );
 
   ipcMain.handle(
     'zuri:doc:updateTask',
     async (_evt, args: { section: string; taskId: string; patch: Partial<Task> }) =>
-      mutate((m) => {
-        const sec = m.sections.find((s) => s.name === args.section);
-        const task = sec?.tasks.find((t) => t.id === args.taskId);
-        if (!task) return;
-
-        if (typeof args.patch.title === 'string') task.title = args.patch.title;
-        if (typeof args.patch.done === 'boolean') task.done = args.patch.done;
-        if (typeof args.patch.priority === 'string' || args.patch.priority === undefined)
-          task.priority = args.patch.priority as Task['priority'];
-        if (typeof args.patch.effort === 'string' || args.patch.effort === undefined)
-          task.effort = args.patch.effort as Task['effort'];
-        if (typeof args.patch.due === 'string' || args.patch.due === undefined)
-          task.due = args.patch.due;
-        if (typeof args.patch.recur === 'string' || args.patch.recur === undefined)
-          task.recur = args.patch.recur as Task['recur'];
-        if (typeof args.patch.lastDone === 'string' || args.patch.lastDone === undefined)
-          task.lastDone = args.patch.lastDone;
+      mutate((doc) => {
+        updateTaskInMarkdownDoc(doc, args.taskId, args.patch);
       }),
   );
 
   ipcMain.handle(
     'zuri:doc:reorderTask',
     async (_evt, args: { section: string; fromIndex: number; toIndex: number }) =>
-      mutate((m) => {
-        const sec = m.sections.find((s) => s.name === args.section);
-        if (!sec || args.fromIndex === args.toIndex) return;
-        if (args.fromIndex < 0 || args.fromIndex >= sec.tasks.length) return;
-        if (args.toIndex < 0 || args.toIndex >= sec.tasks.length) return;
-        const [task] = sec.tasks.splice(args.fromIndex, 1);
-        sec.tasks.splice(args.toIndex, 0, task);
+      mutate((doc) => {
+        reorderTaskInMarkdownDoc(doc, args.section, args.fromIndex, args.toIndex);
       }),
   );
 
   ipcMain.handle(
     'zuri:doc:moveTask',
     async (_evt, args: { fromSection: string; toSection: string; taskId: string }) =>
-      mutate((m) => {
-        moveTaskBetweenSections(m, args.fromSection, args.toSection, args.taskId);
+      mutate((doc) => {
+        moveTaskBetweenSectionsInMarkdownDoc(doc, args.fromSection, args.toSection, args.taskId);
       }),
   );
 
-  ipcMain.handle(
-    'zuri:doc:deleteTask',
-    async (_evt, args: { section: string; taskId: string }) =>
-      mutate((m) => {
-        deleteTaskFromSection(m, args.section, args.taskId);
-      }),
+  ipcMain.handle('zuri:doc:deleteTask', async (_evt, args: { section: string; taskId: string }) =>
+    mutate((doc) => {
+      deleteTaskFromMarkdownDoc(doc, args.section, args.taskId);
+    }),
   );
 
   await startWatchingIfNeeded();
